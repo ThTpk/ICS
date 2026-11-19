@@ -1,0 +1,11 @@
+# ระบบปฏิบัติการ / โปรแกรมแก้ไข
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+.vscode/
+
+# ของที่สร้างระหว่างพัฒนา
+node_modules/
+*.log

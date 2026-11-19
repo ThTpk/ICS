@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Information &amp; Computer Security · คอร์สเรียน</title>
+<meta name="description" content="คอร์สเรียนความปลอดภัยสารสนเทศและคอมพิวเตอร์ อธิบายด้วยภาพเคลื่อนไหวแบบ interactive">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><g stroke="#1d1b18" stroke-width="1.2" stroke-linejoin="round"><path d="M14 2.5l8.5 3v7.2c0 5.4-3.6 9.4-8.5 11.3-4.9-1.9-8.5-5.9-8.5-11.3V5.5z" fill="#cfe3b2"/><path d="M14 2.5v21.5c-4.9-1.9-8.5-5.9-8.5-11.3V5.5z" fill="#b2d491"/><path d="M10.4 13.1h7.2v5.4h-7.2z" fill="#f6e6c9"/><path d="M11.9 13.1v-1.8a2.1 2.1 0 0 1 4.2 0v1.8" fill="none"/><circle cx="14" cy="15.6" r=".9" fill="#1d1b18" stroke="none"/></g></svg>
+      <span>Computer <mark>Security</mark></span>
+    </div>
+    <nav class="tabs" aria-label="ส่วนของคอร์ส">
+      <span class="tab on">บทเรียน</span>
+      <button class="tab" id="glossaryBtn" type="button">คำศัพท์</button>
+    </nav>
+    <span class="spacer"></span>
+    <span class="chip g" id="doneChip">เรียนแล้ว 0 บท</span>
+    <span class="chip v">ภาษาไทย</span>
+  </header>
+
+  <aside class="panel side" aria-label="สารบัญคอร์ส">
+    <div class="side-h">คอร์ส <small id="sideCount"></small></div>
+    <ul class="tree" id="tree"></ul>
+    <div class="progress">
+      <div class="progress-row"><span>ความคืบหน้าในบทนี้</span><span id="progTxt">–</span></div>
+      <div class="bar"><i id="progBar" style="width:0%"></i></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="crumb" id="crumb"></div>
+    <div class="title-row">
+      <h1 id="lessonTitle"></h1>
+      <div class="chips" id="lessonChips"></div>
+    </div>
+    <p class="sub" id="lessonSub"></p>
+
+    <section class="stage" aria-label="แผนภาพจำลอง">
+      <div class="stage-top">
+        <div class="metrics" id="metrics"></div>
+        <div class="stage-btns">
+          <button class="sbtn" id="replay" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8a5 5 0 1 0 1.5-3.6"/><path d="M3 2.5v2.5h2.5"/></svg>เริ่มใหม่</button>
+          <button class="sbtn" id="pause" type="button"></button>
+          <button class="sbtn" id="speed" type="button">1×</button>
+        </div>
+      </div>
+      <div class="scene-box"><svg id="scene" viewBox="120 70 600 420" preserveAspectRatio="xMidYMid meet" role="img" aria-label="แผนภาพจำลอง"></svg></div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="timeline" aria-label="ขั้นในบทนี้">
+      <div class="tl-head"><span>ในบทนี้</span><small id="tlCount"></small></div>
+      <ol class="tl" id="tl"></ol>
+    </section>
+  </main>
+
+  <div class="steps">
+    <section class="panel step-card" aria-live="polite">
+      <div class="step-h"><span id="stepNo"></span><span class="tag" id="stepTag"></span></div>
+      <h2 id="stepTitle"></h2>
+      <div class="step-body" id="stepBody"></div>
+      <div id="controls"></div>
+      <div class="step-nav">
+        <button class="btn" id="prev" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 8H3M7 4L3 8l4 4"/></svg>ย้อน</button>
+        <button class="btn next" id="next" type="button"><span id="nextTxt"></span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+      </div>
+      <div class="keys"><span><kbd>←</kbd> <kbd>→</kbd> เปลี่ยนขั้น</span><span><kbd>Space</kbd> หยุด</span></div>
+    </section>
+    <section class="panel learn">
+      <h3>สิ่งที่จะได้เรียน</h3>
+      <ul id="learn"></ul>
+    </section>
+  </div>
+</div>
+
+<div class="sheet-wrap" id="glossary" hidden>
+  <div class="sheet-back" id="glossaryBack"></div>
+  <section class="sheet panel" role="dialog" aria-modal="true" aria-label="คำศัพท์">
+    <div class="sheet-h"><b>คำศัพท์ที่ใช้ในคอร์ส</b><button class="sbtn" id="glossaryClose" type="button">ปิด</button></div>
+    <dl class="gloss" id="glossList"></dl>
+  </section>
+</div>
+
+<script src="assets/js/core.js"></script>
+<script src="assets/js/lessons/cia.js"></script>
+<script src="assets/js/lessons/risk.js"></script>
+<script src="assets/js/lessons/symmetric.js"></script>
+<script src="assets/js/lessons/asymmetric.js"></script>
+<script src="assets/js/lessons/hashing.js"></script>
+<script src="assets/js/lessons/tls.js"></script>
+<script src="assets/js/lessons/firewall.js"></script>
+<script src="assets/js/lessons/sqli.js"></script>
+<script src="assets/js/lessons/xss.js"></script>
+<script src="assets/js/lessons/mfa.js"></script>
+<script src="assets/js/lessons/rbac.js"></script>
+<script>ICS.start();</script>
+</body>
+</html>
