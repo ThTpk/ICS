@@ -1,278 +1,310 @@
 /* ============================================================
-   บทที่ 1.2 — ภัยคุกคาม ช่องโหว่ และความเสี่ยง
-   asset · vulnerability · threat · risk = โอกาส × ผลกระทบ
+   Lesson 11 — IT Risk Management
+   อ้างอิงสไลด์ "10 ITRiskManagement" ของรายวิชา 01076042
+   แกน: Risk Map 5×5 · ระดับความเสี่ยง = A × B · 4 กลยุทธ์ตอบสนอง
    ============================================================ */
 (function () {
-/* ผู้ก่อภัยคุกคาม (ซ้าย) */
-const THREATS = [
-  { p: [-1.5, 3.7], name: 'บอตสแกนอัตโนมัติ', prefer: [1, 2] },
-  { p: [0.3, 5.5], name: 'คนในที่มีสิทธิ์', prefer: [0] },
-  { p: [2.1, 7.3], name: 'กลุ่มเรียกค่าไถ่', prefer: [0, 1, 2] }
+/* ---- ตาราง 5×5 ---- */
+const CELL = 44, GX = 176, GY = 118;
+const cx = b => GX + (b - 0.5) * CELL;              /* ความรุนแรง 1..5 ไปทางขวา */
+const cy = a => GY + (5 - a + 0.5) * CELL;          /* โอกาส 5 อยู่บน 1 อยู่ล่าง */
+
+/* ทะเบียนความเสี่ยง จัดวางตามตัวอย่างใน Risk Map ของสไลด์ */
+const RISKS = [
+  { id: 1, name: 'Server hardware fails', type: 'Technical', a: 3, b: 3,
+    factor: 'Disks and PSUs wear out', hit: 'All services on that host',
+    fix: { avoid: 'Move it to managed cloud', transfer: '4-hour replacement contract',
+           reduce: 'Redundant disks, spare host', accept: 'Rebuild from backup if it fails' }, cost: 2 },
+  { id: 2, name: 'Admin misconfiguration', type: 'Operator', a: 3, b: 2,
+    factor: 'Manual changes in production', hit: 'Whichever service was touched',
+    fix: { avoid: 'Remove direct prod access', transfer: 'Outsource operations',
+           reduce: 'Change review and rollback', accept: 'Fix forward when it is noticed' }, cost: 2 },
+  { id: 3, name: 'Ransomware', type: 'Technical', a: 4, b: 5,
+    factor: 'Phishing and unpatched endpoints', hit: 'Every file that account reaches',
+    fix: { avoid: 'Not realistic, email is needed', transfer: 'Cyber insurance covers part',
+           reduce: 'Offline backups, MFA, patching', accept: 'Pay and hope, not a plan' }, cost: 4 },
+  { id: 4, name: 'Power outage', type: 'Disaster', a: 5, b: 3,
+    factor: 'One utility feed, no generator', hit: 'The whole server room',
+    fix: { avoid: 'Stop running a server room', transfer: 'Colocation with a power SLA',
+           reduce: 'UPS, generator, fuel contract', accept: 'Accept short outages' }, cost: 3 },
+  { id: 5, name: 'Key staff leaves', type: 'Management', a: 5, b: 4,
+    factor: 'One person holds the knowledge', hit: 'Every change and every incident',
+    fix: { avoid: 'Cannot be avoided', transfer: 'Vendor support contract',
+           reduce: 'Document and cross-train', accept: 'Carry the key-person risk' }, cost: 2 },
+  { id: 6, name: 'Flood in the building', type: 'Disaster', a: 2, b: 5,
+    factor: 'Server room on the ground floor', hit: 'Hardware and on-site storage',
+    fix: { avoid: 'Move the room to an upper floor', transfer: 'Property insurance',
+           reduce: 'Raised floor, water sensors', accept: 'Rare enough to live with' }, cost: 3 },
+  { id: 7, name: 'Internet link fails', type: 'Technical', a: 1, b: 2,
+    factor: 'One provider, one physical route', hit: 'External users only',
+    fix: { avoid: 'Not possible online', transfer: 'SLA with service credits',
+           reduce: 'Second provider, other route', accept: 'Already inside tolerance' }, cost: 1 }
 ];
-/* ช่องโหว่ 4 ช่อง (กลาง) — ช่อง 0–2 เพิ่มโอกาสเกิด ช่อง 3 เพิ่มผลกระทบ */
-const SLOTS = [
-  { p: [1.9, 0.7], key: 'cPass', label: '1 รหัสผ่านอ่อนแอ', fix: 'บังคับรหัสแข็งแรง + MFA' },
-  { p: [3.05, 1.85], key: 'cPatch', label: '2 ซอฟต์แวร์ไม่อัปเดต', fix: 'อัปเดตอัตโนมัติ' },
-  { p: [4.2, 3.0], key: 'cPort', label: '3 เปิดพอร์ตจัดการ', fix: 'ปิดพอร์ต ใช้ VPN' },
-  { p: [5.35, 4.15], key: 'cBackup', label: '4 ไม่มีสำรองข้อมูล', fix: 'สำรองข้อมูลนอกสถานที่' }
-];
-const ASSET = [5.7, 0.3];
 
-const LIKELY = [1, 2, 4, 5];           // จากจำนวนช่องโหว่ที่ยังเปิด (0–3)
-const LEVEL = [[4, 'ต่ำ', 'ok'], [9, 'ปานกลาง', ''], [14, 'สูง', 'bad'], [99, 'วิกฤต', 'bad']];
-const cellFill = s => s <= 4 ? '#e8efd9' : s <= 9 ? '#f6e6c9' : s <= 14 ? '#fcdcbd' : '#f8d5cf';
+const STRATS = {
+  none:     { name: 'Not treated yet', short: 'none' },
+  avoid:    { name: 'Avoid — stop the activity so the risk cannot occur', short: 'avoid' },
+  transfer: { name: 'Transfer — move the loss to somebody else', short: 'transfer' },
+  reduce:   { name: 'Reduce — lower the likelihood or the severity', short: 'reduce' },
+  accept:   { name: 'Accept — keep it, but keep watching it', short: 'accept' }
+};
 
-function levelOf(score) { for (const l of LEVEL) if (score <= l[0]) return l; return LEVEL[3]; }
-const openCount = cfg => SLOTS.slice(0, 3).filter(s => !cfg[s.key]).length;
-const likelihood = cfg => LIKELY[openCount(cfg)];
-const impact = cfg => cfg.cBackup ? 2 : 5;
-
-/* ตารางความเสี่ยง 5×5 */
-function riskMatrix(ctx, parent, x0, y0, cell) {
-  const g = ctx.el('g', {}, parent);
-  ctx.el('rect', { class: 'pn-shadow', x: x0 - 12, y: y0 - 24, width: cell * 5 + 24, height: cell * 5 + 54, rx: 9 }, g);
-  ctx.el('rect', { class: 'pn-bg', x: x0 - 14, y: y0 - 27, width: cell * 5 + 24, height: cell * 5 + 54, rx: 9 }, g);
-  const t = ctx.el('text', { class: 'pn-title', x: x0 - 4, y: y0 - 12 }, g); t.textContent = 'ตารางความเสี่ยง';
-  for (let l = 1; l <= 5; l++) for (let i = 1; i <= 5; i++) {
-    ctx.el('rect', {
-      class: 'rm-cell', x: x0 + (l - 1) * cell, y: y0 + (5 - i) * cell,
-      width: cell, height: cell, fill: cellFill(l * i)
-    }, g);
-  }
-  const cap = ctx.el('text', { class: 'rm-ax', x: x0 - 4, y: y0 + cell * 5 + 16 }, g);
-  cap.textContent = 'โอกาส →   ผลกระทบ ↑';
-  const dot = ctx.el('circle', { class: 'rm-dot', r: 3.4, cx: x0, cy: y0 }, g);
-  const ring = ctx.el('circle', { class: 'rm-mark', r: 9, cx: x0, cy: y0 }, g);
-  return {
-    at(l, i) {
-      const cx = x0 + (l - 0.5) * cell, cy = y0 + (5 - i + 0.5) * cell;
-      [dot, ring].forEach(e => { e.setAttribute('cx', cx.toFixed(1)); e.setAttribute('cy', cy.toFixed(1)); });
-    }
-  };
+/* ผลของกลยุทธ์ต่อ A และ B */
+function treated(r, strat) {
+  if (strat === 'avoid') return { a: 0, b: 0, gone: true, cost: r.cost + 2 };
+  if (strat === 'transfer') return { a: r.a, b: Math.max(1, r.b - 2), cost: r.cost + 1 };
+  if (strat === 'reduce') return { a: Math.max(1, r.a - 2), b: Math.max(1, r.b - 1), cost: r.cost };
+  return { a: r.a, b: r.b, cost: 0 };
 }
+/* กลยุทธ์ใช้กับความเสี่ยงที่เกินเกณฑ์เท่านั้น ที่ผ่านเกณฑ์อยู่แล้วปล่อยไว้ */
+function stateOf(cfg, r) {
+  const inherent = r.a * r.b;
+  if (cfg.strategy === 'none' || inherent <= cfg.tol) return { a: r.a, b: r.b, cost: 0, strat: 'none' };
+  const t = treated(r, cfg.strategy);
+  return { a: t.a, b: t.b, gone: t.gone, cost: t.cost, strat: cfg.strategy };
+}
+const score = s => s.gone ? 0 : s.a * s.b;
+const band = v => v <= 9 ? '#e8efd9' : v <= 14 ? '#f6e6c9' : v <= 19 ? '#fcdcbd' : '#f8d5cf';
 
 ICS.register({
   id: 'risk',
-  title: 'ภัยคุกคาม ช่องโหว่ และความเสี่ยง',
-  sub: 'คำสามคำที่คนใช้ปนกันตลอด แต่แยกให้ออกเมื่อไร การตัดสินใจว่าจะลงทุนป้องกันตรงไหนก็ง่ายขึ้นทันที',
-  minutes: 11,
-  level: 'พื้นฐาน',
+  title: 'IT Risk Management',
+  sub: 'A problem has already happened. A risk might. Put a number on it, put it on a map, and then decide which of four things to do about it.',
+  minutes: 14,
+  level: 'Intermediate',
 
   legend: [
-    ['bad', 'การโจมตีที่พุ่งเข้าหาช่องโหว่'],
-    ['res', 'ถูกบล็อกที่มาตรการควบคุม'],
-    ['hollow', 'ช่องโหว่ที่ปิดแล้ว'],
-    ['req sq', 'ทรัพย์สินที่ต้องปกป้อง']
+    ['res', 'Within tolerance'],
+    ['bad', 'Above tolerance'],
+    ['hollow', 'Where it moves after treatment'],
+    ['req sq', 'Risk being reviewed']
   ],
 
   metrics: [
-    { key: 'hit', label: 'ทะลุถึงทรัพย์สิน', bad: true, tone: c => (c.stats.hit || 0) > 0 ? 'warn' : '' },
-    { key: 'blocked', label: 'ถูกบล็อก', tone: c => (c.stats.blocked || 0) > 0 ? 'lit' : '' },
-    { key: 'loss', label: 'เสียหายกู้ไม่ได้', bad: true },
-    { key: 'l', label: 'โอกาสเกิด', fmt: c => likelihood(c.cfg) + ' / 5' },
-    { key: 'i', label: 'ผลกระทบ', fmt: c => impact(c.cfg) + ' / 5' },
-    {
-      key: 'lv', label: 'ระดับความเสี่ยง',
-      fmt: c => { const s = likelihood(c.cfg) * impact(c.cfg); return levelOf(s)[1] + ' (' + s + ')'; },
-      tone: c => { const lv = levelOf(likelihood(c.cfg) * impact(c.cfg)); return lv[2] === 'ok' ? 'lit' : lv[2] === 'bad' ? 'warn' : ''; }
-    }
+    { key: 'n', label: 'Risks on the register', fmt: () => String(RISKS.length) },
+    { key: 'over', label: 'Above tolerance', bad: true,
+      fmt: c => String(RISKS.filter(r => score(stateOf(c.cfg, r)) > c.cfg.tol).length),
+      tone: c => RISKS.filter(r => score(stateOf(c.cfg, r)) > c.cfg.tol).length === 0 ? 'lit' : 'warn' },
+    { key: 'total', label: 'Total risk score', fmt: c => String(RISKS.reduce((s, r) => s + score(stateOf(c.cfg, r)), 0)) },
+    { key: 'worst', label: 'Worst remaining', fmt: c => String(Math.max.apply(null, RISKS.map(r => score(stateOf(c.cfg, r))))) },
+    { key: 'budget', label: 'Budget used', fmt: c => RISKS.reduce((s, r) => s + stateOf(c.cfg, r).cost, 0) + ' units' }
   ],
 
   learn: [
-    ['ทรัพย์สินคือสิ่งที่เราปกป้อง ไม่ใช่เครื่องเซิร์ฟเวอร์', 0],
-    ['ช่องโหว่คือจุดอ่อนที่มีอยู่ในระบบของเราเอง', 1],
-    ['ภัยคุกคามที่ไม่มีช่องโหว่ให้ใช้ ไม่กลายเป็นความเสี่ยง', 2],
-    ['ความเสี่ยง = โอกาสเกิด × ผลกระทบ', 3],
-    ['มาตรการบางอย่างลดโอกาส บางอย่างลดผลกระทบ', 5]
+    ['A risk might happen, a problem already has', 0],
+    ['Likelihood and severity are each rated one to five', 1],
+    ['Risk level is A × B, and the business sets the acceptable line', 2],
+    ['Avoid, transfer, reduce and accept move a risk differently', 3],
+    ['What is left afterwards is residual risk, and it is monitored', 5]
   ],
 
   steps: [
     {
-      tag: 'concept', label: 'ทรัพย์สิน', title: 'เริ่มจากถามว่าเรากำลังปกป้องอะไร',
+      tag: 'concept', label: 'Risk vs problem', title: 'A risk is not a problem',
       body: [
-        'งานความปลอดภัยไม่ได้เริ่มที่เครื่องมือ แต่เริ่มที่การรู้ว่าอะไรมีค่าและมีค่าแค่ไหน สิ่งนั้นเรียกว่า <code>ทรัพย์สิน</code> ซึ่งไม่ใช่ตัวเซิร์ฟเวอร์ แต่คือข้อมูลลูกค้า ความต่อเนื่องของบริการ และชื่อเสียงที่อยู่ในนั้น',
-        'กล่องขวามือคือระบบที่เก็บข้อมูลลูกค้าทั้งหมด ถ้าตอบไม่ได้ว่ามันมีค่าเท่าไร ก็ตอบไม่ได้ว่าควรจ่ายเท่าไรเพื่อปกป้องมัน'
+        'A problem has already happened and you are dealing with it. A <code>risk</code> is something that has not happened yet but would hurt if it did. The two need completely different work: one needs a fix, the other needs a decision.',
+        'Seven risks are on the register, cycling one at a time. Each one records what kind it is, what makes it likely, and who gets hurt. The slides group them as technical, operator, disaster and management, and the mix matters — a register full of only technical risks means nobody asked the other questions.'
       ],
-      note: ['ทำไมต้องเริ่มตรงนี้', 'งบประมาณมีจำกัดเสมอ การจัดลำดับว่าจะปกป้องอะไรก่อนต้องอิงมูลค่า ไม่ใช่อิงว่าเทคโนโลยีไหนกำลังเป็นที่นิยม'],
-      changed: ['ทรัพย์สิน: ฐานข้อมูลลูกค้า', 'ยังไม่ได้ประเมินอะไรทั้งนั้น'],
-      cfg: { cPass: false, cPatch: false, cPort: false, cBackup: false, threats: 1, matrix: false }
+      note: ['Where risks come from', 'Start from the target and the key success factors. A risk is anything that stands between them. That is why the register belongs to the business owner and not to the system administrator.'],
+      changed: ['Register: 7 risks', 'Not assessed yet'],
+      cfg: { show: { map: false, tol: false }, strategy: 'none', tol: 9 }
     },
     {
-      tag: 'concept', label: 'ช่องโหว่', title: 'ช่องโหว่คือจุดอ่อนที่อยู่ในบ้านเราเอง',
+      tag: 'concept', label: 'Assessment', title: 'Rate likelihood and severity, one to five',
       body: [
-        '<code>ช่องโหว่</code> คือสภาพของระบบเราที่เปิดให้ถูกทำร้ายได้ สังเกตแนวกั้นตรงกลางที่มีสี่ช่อง แต่ละช่องคือจุดอ่อนหนึ่งข้อ ตอนนี้เปิดโล่งทั้งสี่ช่อง',
-        'จุดสำคัญคือช่องโหว่เป็นเรื่องของเรา ไม่ใช่ของผู้โจมตี เราควบคุมมันได้เองทั้งหมด และมันมีอยู่แม้ไม่มีใครมาโจมตีเลยสักคน'
+        'Each risk gets two numbers. <code>A</code> is how likely it is, from 1 for very rare to 5 for very frequent. <code>B</code> is how bad it would be, from 1 for barely noticeable to 5 for severe. Both scales have to be written down and agreed, or two people will score the same risk differently.',
+        'Plot them and the register becomes a map. Likelihood runs up the side, severity runs along the bottom. Now the risks can be compared with each other instead of argued about one at a time.'
       ],
-      note: ['ช่องโหว่มาจากไหน', 'มาจากบั๊กในโค้ด การตั้งค่าที่หละหลวม ซอฟต์แวร์ที่หมดอายุ และกระบวนการทำงานที่ไม่รัดกุม สามอย่างหลังไม่ใช่เรื่องเทคนิคเลยด้วยซ้ำ'],
-      changed: ['พบช่องโหว่ 4 ข้อ'],
-      cfg: { cPass: false, cPatch: false, cPort: false, cBackup: false, threats: 1, matrix: false }
+      note: ['Scenario analysis', 'Severity is the harder number. Describing a concrete scenario — what exactly breaks, for how long, affecting whom — gets a far more consistent rating than asking people for a score in the abstract.'],
+      changed: ['Showing the 5×5 risk map'],
+      cfg: { show: { map: true, tol: false }, strategy: 'none', tol: 9 }
     },
     {
-      tag: 'concept', label: 'ภัยคุกคาม', title: 'ภัยคุกคามคือสิ่งที่อยู่นอกการควบคุมของเรา',
+      tag: 'concept', label: 'A × B', title: 'Risk level is A × B, and the line is a decision',
       body: [
-        '<code>ภัยคุกคาม</code> คือใครหรืออะไรที่อาจใช้ช่องโหว่ทำร้ายเรา ทางซ้ายมีสามแบบที่ต่างกันชัดเจน บอตที่ยิงมั่วทั้งอินเทอร์เน็ต คนในที่มีสิทธิ์อยู่แล้ว และกลุ่มที่ตั้งใจมาเรียกค่าไถ่',
-        'เราสั่งให้ภัยคุกคามหายไปไม่ได้ สิ่งเดียวที่ทำได้คือปิดช่องโหว่ที่มันจะใช้ ลองจำประโยคนี้ไว้ ภัยคุกคามที่ไม่มีช่องโหว่ให้ใช้ จะไม่กลายเป็นความเสี่ยง'
+        'Multiply the two numbers and you get the risk level. The map is shaded by that product, so the top right corner is where the serious ones live. The slides use <code>A × B ≤ 9</code> as the acceptable threshold.',
+        'That number is not a law of nature, it is a decision the organisation makes about its own appetite. Four risks sit above it here, and those four are the ones that need a response. The other three are already acceptable, and spending money on them would be waste.'
       ],
-      note: ['ภัยคุกคามไม่ได้มีแต่คน', 'ไฟไหม้ น้ำท่วม ไฟดับ ฮาร์ดดิสก์พัง และความผิดพลาดของพนักงานเองก็เป็นภัยคุกคาม และหลายครั้งทำความเสียหายมากกว่าแฮกเกอร์'],
-      changed: ['ภัยคุกคาม: 3 แหล่ง'],
-      cfg: { cPass: false, cPatch: false, cPort: false, cBackup: false, threats: 3, matrix: false }
+      note: ['Why multiply', 'It keeps rare-but-catastrophic and frequent-but-trivial in view at the same time. A flood scores 2 × 5 = 10 and a link failure scores 1 × 2 = 2, which is the ordering anybody would want.'],
+      changed: ['Acceptance threshold A × B ≤ 9'],
+      cfg: { show: { map: true, tol: true }, strategy: 'none', tol: 9 }
     },
     {
-      tag: 'concept', label: 'ความเสี่ยง', title: 'ความเสี่ยง = โอกาสเกิด × ผลกระทบ',
+      tag: 'technique', label: 'Four responses', title: 'Avoid, transfer, reduce, accept',
       body: [
-        'เอาสองอย่างมาคูณกันถึงจะได้ <code>ความเสี่ยง</code> ซึ่งเป็นตัวเลขที่เอาไปเทียบลำดับความสำคัญได้ ตอนนี้ช่องโหว่เปิดครบสามข้อ โอกาสเกิดจึงสูงสุด และไม่มีสำรองข้อมูล ผลกระทบจึงสูงสุดเช่นกัน',
-        'จุดดำในตารางมุมขวาล่างอยู่มุมขวาบน ซึ่งคือช่องวิกฤต ตารางนี้ไม่ได้มีไว้ให้สวย แต่มีไว้ตอบคำถามว่าเรื่องไหนต้องแก้ก่อน'
+        'There are only four things you can do. <code>Avoid</code> stops the activity so the risk cannot arise. <code>Transfer</code> moves the loss to somebody else, usually insurance or a contract. <code>Reduce</code> lowers the likelihood or the severity. <code>Accept</code> keeps the risk deliberately and watches it.',
+        'Switch between them below and watch where the dots go. Each one moves a risk in a different direction on the map, which is the clearest way to see that they are not interchangeable. Only risks above the line are treated; the acceptable ones are left where they are.'
       ],
-      note: ['เรื่องที่คนมองข้าม', 'ช่องโหว่ที่เจาะยากมากแต่ถ้าสำเร็จแล้วบริษัทล้ม อาจสำคัญกว่าช่องโหว่ที่เจาะง่ายแต่เสียหายแค่หลักร้อยบาท การคูณกันช่วยให้เห็นเรื่องนี้'],
-      changed: ['เปิดการประเมินความเสี่ยง'],
-      cfg: { cPass: false, cPatch: false, cPort: false, cBackup: false, threats: 3, matrix: true }
+      note: ['Transfer does not remove the risk', 'Insurance pays for some of the loss. It does not stop the outage, it does not restore your data, and it does not repair the reputation. The likelihood is untouched, which is exactly what the map shows.'],
+      changed: ['Treating every risk above the line'],
+      cfg: { show: { map: true, tol: true }, strategy: 'reduce', tol: 9 },
+      controls: ['strategy']
     },
     {
-      tag: 'technique', label: 'ลดโอกาส', title: 'มาตรการควบคุมที่ลดโอกาสเกิด',
+      tag: 'technique', label: 'Action plan', title: 'Every response costs something',
       body: [
-        'ปิดช่องโหว่สามข้อแรกด้วยมาตรการที่ตรงกัน บังคับรหัสผ่านแข็งแรงพร้อม MFA อัปเดตซอฟต์แวร์อัตโนมัติ และปิดพอร์ตจัดการไม่ให้ออกสู่อินเทอร์เน็ต',
-        'การโจมตีทุกครั้งถูกหยุดตั้งแต่แนวกั้น จุดดำเลื่อนไปทางซ้ายจนสุด แต่สังเกตให้ดีว่ามันยังอยู่แถวบน เพราะผลกระทบยังไม่ได้ถูกแตะต้องเลย'
+        'A response is not a decision, it is a plan: the activity, what it should achieve, the budget, who owns it, and by when. The budget line in the readout totals what the chosen strategy costs across every treated risk.',
+        'Compare the strategies on cost as well as effect. Avoiding is thorough and expensive, and it usually means giving up something the business wanted. Accepting is free and sometimes right. The cheapest strategy that gets everything under the line is the correct answer, not the most thorough one.'
       ],
-      note: ['ลดไม่ได้แปลว่าหมด', 'ไม่มีมาตรการไหนทำให้โอกาสเป็นศูนย์ สิ่งที่เหลืออยู่เรียกว่าความเสี่ยงคงเหลือ ซึ่งต้องมีคนรับผิดชอบตัดสินใจว่ายอมรับได้ไหม'],
-      changed: ['ปิดช่องโหว่ 1, 2, 3'],
-      cfg: { cPass: true, cPatch: true, cPort: true, cBackup: false, threats: 3, matrix: true }
+      note: ['The fields that get skipped', 'Owner and deadline are the two that get left blank, and they are the two that decide whether anything actually happens. A risk response with no name against it is a wish.'],
+      changed: ['Showing cost per strategy'],
+      cfg: { show: { map: true, tol: true }, strategy: 'transfer', tol: 9 },
+      controls: ['strategy']
     },
     {
-      tag: 'technique', label: 'ลดผลกระทบ', title: 'มาตรการที่ลดผลกระทบ ไม่ใช่โอกาส',
+      tag: 'concept', label: 'Residual risk', title: 'What is left afterwards still has a number',
       body: [
-        'การสำรองข้อมูลไม่ได้ทำให้ใครเจาะเราได้ยากขึ้นเลยแม้แต่นิดเดียว โอกาสเกิดเท่าเดิมเป๊ะ แต่ถ้าวันหนึ่งโดนเข้าจริง ความเสียหายต่างกันคนละเรื่อง',
-        'จุดดำเลื่อนลงมาด้านล่าง ความเสี่ยงกลายเป็นระดับต่ำ นี่คือเหตุผลที่ต้องมีมาตรการทั้งสองชนิด ถ้ามีแต่ชนิดที่ลดโอกาส วันที่พลาดขึ้นมาจะเจ็บเต็มๆ'
+        'Treatment moves a risk, it rarely deletes it. Whatever remains is <code>residual risk</code>, and it goes back on the register with its new score. The closing question in the slides is exactly this: after the activity, what should the risk look like?',
+        'The honest answer is a smaller number, still written down, still owned, and reviewed on a schedule. A risk that was reduced in 2022 and never looked at again is not managed, it is forgotten — and the conditions that set its score have almost certainly changed.'
       ],
-      note: ['แผนสำรองที่ไม่เคยทดสอบ', 'สำรองข้อมูลที่ไม่เคยลองกู้คืนจริง นับว่าไม่มี องค์กรจำนวนมากค้นพบตอนโดนแรนซัมแวร์ว่าไฟล์สำรองของตัวเองก็ถูกเข้ารหัสไปด้วย'],
-      changed: ['ปิดช่องโหว่ 4: สำรองข้อมูล'],
-      cfg: { cPass: true, cPatch: true, cPort: true, cBackup: true, threats: 3, matrix: true }
+      note: ['Monitoring closes the loop', 'The last two COSO steps are communication and monitoring, and they are the ones that get dropped. Without them the register becomes a document that was true once.'],
+      changed: ['Residual scores after treatment'],
+      cfg: { show: { map: true, tol: true }, strategy: 'reduce', tol: 9 }
     },
     {
-      tag: 'lab', label: 'ลองเอง', title: 'ลองเอง: เลือกว่าจะจ่ายกับอะไรก่อน',
+      tag: 'lab', label: 'Try it', title: 'Try it: get everything under the line',
       body: [
-        'สมมติว่ามีงบพอปิดช่องโหว่ได้แค่สองข้อ ลองเปิดปิดดูว่าคู่ไหนทำให้ระดับความเสี่ยงต่ำที่สุด คำตอบอาจไม่ใช่สองข้อที่ดู "เทคนิคจ๋า" ที่สุด',
-        'นอกจากการลดความเสี่ยงแล้ว ยังมีอีกสามทางเลือกที่ถูกต้องพอกัน <code>โอน</code> ด้วยการทำประกันหรือจ้างคนอื่นดูแล <code>เลี่ยง</code> ด้วยการเลิกเก็บข้อมูลที่ไม่จำเป็นตั้งแต่แรก และ <code>ยอมรับ</code> เมื่อค่าป้องกันแพงกว่าความเสียหายที่อาจเกิด'
+        'Move the tolerance to what you think your own organisation would accept, then find the cheapest strategy that leaves nothing above it. Watch what happens to the count when the tolerance is tightened to 4 — risks that were comfortably fine become work.',
+        'Then look at risk 5, the one about key staff. It cannot be avoided and it cannot really be insured. Some risks only respond to one of the four strategies, and recognising which is most of the skill.'
       ],
-      note: ['ข้อมูลที่ไม่ได้เก็บ รั่วไม่ได้', 'วิธีลดความเสี่ยงที่ถูกมองข้ามที่สุดคือการเลิกเก็บข้อมูลที่ไม่ได้ใช้จริง ไม่ต้องป้องกันสิ่งที่ไม่มีอยู่'],
+      note: ['The workshop this comes from', 'The assignment asks for five risks of your own with likelihood and severity tables you define, plotted on this map, each with a strategy and an action plan. This is that exercise with the register already filled in.'],
       changed: [],
-      cfg: { cPass: false, cPatch: true, cPort: false, cBackup: false, threats: 3, matrix: true },
-      controls: ['cPass', 'cPatch', 'cPort', 'cBackup']
+      cfg: { show: { map: true, tol: true }, strategy: 'none', tol: 9 },
+      controls: ['strategy', 'tol']
     }
   ],
 
   controls: {
-    cPass: { type: 'toggle', label: 'บังคับรหัสแข็งแรง + MFA', hint: 'ปิดช่องโหว่ที่ 1 · ลดโอกาส', get: c => c.cPass, set: (c, v) => { c.cPass = v; } },
-    cPatch: { type: 'toggle', label: 'อัปเดตซอฟต์แวร์อัตโนมัติ', hint: 'ปิดช่องโหว่ที่ 2 · ลดโอกาส', get: c => c.cPatch, set: (c, v) => { c.cPatch = v; } },
-    cPort: { type: 'toggle', label: 'ปิดพอร์ตจัดการ ใช้ VPN', hint: 'ปิดช่องโหว่ที่ 3 · ลดโอกาส', get: c => c.cPort, set: (c, v) => { c.cPort = v; } },
-    cBackup: { type: 'toggle', label: 'สำรองข้อมูลนอกสถานที่', hint: 'ปิดช่องโหว่ที่ 4 · ลดผลกระทบ', get: c => c.cBackup, set: (c, v) => { c.cBackup = v; } }
+    strategy: {
+      type: 'seg', label: 'Response applied to every risk above the line',
+      options: [['none', 'None'], ['reduce', 'Reduce'], ['transfer', 'Transfer'], ['avoid', 'Avoid'], ['accept', 'Accept']],
+      get: c => c.strategy, set: (c, v) => { c.strategy = v; }
+    },
+    tol: {
+      type: 'range', min: 4, max: 20, step: 1, get: c => c.tol, set: (c, v) => { c.tol = v; },
+      label: v => `Acceptable risk level: <output>A × B ≤ ${v}</output>`
+    }
   },
 
   /* ---------------- scene ---------------- */
-  init(ctx) {
-    const iso = ctx.iso;
-    ctx.S = {
-      P: {
-        t: THREATS.map(t => iso(t.p[0], t.p[1] - 0.45, 0.7)),
-        s: SLOTS.map(s => iso(s.p[0], s.p[1], 0.75)),
-        a: iso(ASSET[0] - 0.7, ASSET[1], 0.8)
-      }
-    };
-  },
+  init(ctx) { ctx.S = { cur: 0 }; },
 
   build(ctx) {
-    const S = ctx.S, iso = ctx.iso, Ac = ctx.actor, L = ctx.L;
+    const S = ctx.S, L = ctx.L;
+    const G = ctx.el('g', {}, L.hud);
+    S.mapG = G;
 
-    SLOTS.forEach(s => ctx.line(iso(s.p[0], s.p[1], 0.2), iso(ASSET[0], ASSET[1], 0.2), 'wire', L.wires));
+    /* ช่องตาราง */
+    S.cells = [];
+    for (let a = 1; a <= 5; a++) for (let b = 1; b <= 5; b++) {
+      const r = ctx.el('rect', {
+        class: 'rm-cell', x: GX + (b - 1) * CELL, y: GY + (5 - a) * CELL,
+        width: CELL, height: CELL, fill: band(a * b)
+      }, G);
+      const t = ctx.el('text', { class: 'rm-ax', x: GX + (b - 1) * CELL + 4, y: GY + (5 - a) * CELL + 12 }, G);
+      t.textContent = a * b;
+      S.cells.push({ a, b, r, t });
+    }
+    /* แกน */
+    for (let b = 1; b <= 5; b++) {
+      const t = ctx.el('text', { class: 'rm-ax', x: cx(b), y: GY + 5 * CELL + 14, 'text-anchor': 'middle' }, G);
+      t.textContent = b;
+    }
+    for (let a = 1; a <= 5; a++) {
+      const t = ctx.el('text', { class: 'rm-ax', x: GX - 8, y: cy(a) + 4, 'text-anchor': 'end' }, G);
+      t.textContent = a;
+    }
+    const xs = ctx.el('text', { class: 'rm-ax', x: GX + 2.5 * CELL, y: GY + 5 * CELL + 30, 'text-anchor': 'middle' }, G);
+    xs.textContent = 'SEVERITY  B  →';
+    const ys = ctx.el('text', { class: 'rm-ax', x: GX, y: GY - 10 }, G);
+    ys.textContent = 'LIKELIHOOD A ↑';
 
-    /* แนวกั้น 4 ช่อง */
-    S.slots = SLOTS.map((s, i) => {
-      const g = ctx.el('g', {}, L.ents);
-      ctx.block(g, s.p[0], s.p[1], 1.05, 1.05, 0.18, 0, ctx.PAL.grey[0], ctx.PAL.grey[1], 7);
-      const shield = ctx.el('g', {}, g);
-      const b = ctx.block(shield, s.p[0], s.p[1], 0.78, 0.78, 0.95, 0.18, ctx.PAL.green[0], ctx.PAL.green[1], 4);
-      ctx.glyph.lock(shield, iso(s.p[0], s.p[1], b.zt));
-      const gap = ctx.el('g', {}, g);
-      const c = iso(s.p[0], s.p[1], 0.3);
-      ctx.line([c[0] - 9, c[1] - 5], [c[0] + 9, c[1] + 5], 'gap-x', gap);
-      ctx.line([c[0] - 9, c[1] + 5], [c[0] + 9, c[1] - 5], 'gap-x', gap);
-      const n = ctx.el('text', { class: 'slot-num', x: c[0], y: c[1] - 34 }, g);
-      n.textContent = String(i + 1);
-      return { shield, gap, g };
+    /* จุดความเสี่ยง */
+    S.dots = RISKS.map(r => {
+      const g = ctx.el('g', {}, G);
+      const c = ctx.el('circle', { class: 'risk-dot', cx: cx(r.b), cy: cy(r.a), r: 13, fill: '#fbf7f1', stroke: '#1d1b18', 'stroke-width': 1.4 }, g);
+      const t = ctx.el('text', { class: 'risk-num', x: cx(r.b), y: cy(r.a) + 4, 'text-anchor': 'middle' }, g);
+      t.textContent = r.id;
+      return { g, c, t, r };
     });
 
-    /* ผู้ก่อภัยคุกคาม */
-    S.threats = THREATS.map((t, i) => {
-      const g = ctx.el('g', {}, L.ents);
-      Ac.attacker(g, t.p[0], t.p[1]);
-      const pp = iso(t.p[0], t.p[1], 0);
-      const pill = ctx.pill(L.labels, pp[0] - 4, pp[1] + 34, [t.name]);
-      return { g, pill };
-    });
-
-    /* ทรัพย์สิน */
-    const ag = ctx.el('g', { class: 'node' }, L.ents);
-    Ac.server(ag, ASSET[0], ASSET[1], 'bone', 1.7);
-    S.assetG = ag;
-    S.assetPill = ctx.pill(L.labels, iso(ASSET[0] + 0.95, ASSET[1] + 0.95, 0)[0], iso(ASSET[0] + 0.95, ASSET[1] + 0.95, 0)[1] + 18, ['ฐานข้อมูลลูกค้า', '']);
-
-    S.vuln = ctx.statusList(L.hud, {
-      x: 126, y: 78, w: 256, title: 'ช่องโหว่ที่พบในระบบ',
-      items: SLOTS.map(s => s.label)
-    });
-    S.matrixG = ctx.el('g', {}, L.hud);
-    S.matrix = riskMatrix(ctx, S.matrixG, 548, 330, 24);
+    S.regP = ctx.panel(L.hud, { x: 420, y: 92, w: 296, rows: 9, lh: 16, title: 'Risk register' });
+    S.detP = ctx.panel(L.hud, { x: 420, y: 288, w: 296, rows: 5, lh: 16, title: 'Risk under review' });
+    S.sumP = ctx.panel(L.hud, { x: 140, y: 404, w: 576, rows: 2, title: 'Where this leaves us' });
   },
 
   tick(ctx, dt) {
-    const cfg = ctx.cfg, S = ctx.S, P = S.P;
-    const n = cfg.threats;
-    if (ctx.timer('atk', dt, n === 1 ? 2600 : 850)) {
-      const ti = Math.floor(Math.random() * n);
-      const pref = THREATS[ti].prefer;
-      const si = pref[Math.floor(Math.random() * pref.length)];
-      ctx.launch([P.t[ti], P.s[si]], 'bad', { meta: { leg: 'slot', si }, speed: 300, r: 4.6 });
-    }
-  },
-
-  arrive(ctx, p) {
-    const cfg = ctx.cfg, S = ctx.S, P = S.P, m = p.meta;
-    if (m.leg === 'slot') {
-      if (cfg[SLOTS[m.si].key] && Math.random() < 0.88) { ctx.bump('blocked'); ctx.puff(P.s[m.si], 'ok'); return; }
-      /* ที่เหลือคือความเสี่ยงคงเหลือ ไม่มีมาตรการไหนกันได้ 100% */
-      ctx.launch([P.s[m.si], P.a], 'bad', { meta: { leg: 'asset', residual: !!cfg[SLOTS[m.si].key] }, speed: 300, r: 4.6 });
-      return;
-    }
-    if (m.leg === 'asset') {
-      ctx.bump('hit'); ctx.ring(P.a);
-      const top = [P.a[0], P.a[1] - 30];
-      if (!cfg.cBackup) { ctx.bump('loss'); ctx.float(top, m.residual ? 'เล็ดลอดเข้ามา' : 'ข้อมูลหาย', 'bad'); }
-      else ctx.float(top, 'กู้คืนได้', 'ok');
-    }
+    const S = ctx.S;
+    if (ctx.timer('cycle', dt, 2600)) S.cur = (S.cur + 1) % RISKS.length;
   },
 
   render(ctx) {
-    const cfg = ctx.cfg, S = ctx.S;
+    const cfg = ctx.cfg, S = ctx.S, sh = cfg.show;
 
-    S.slots.forEach((s, i) => {
-      const closed = !!cfg[SLOTS[i].key];
-      s.shield.setAttribute('display', closed ? 'inline' : 'none');
-      s.gap.setAttribute('display', closed ? 'none' : 'inline');
-      S.vuln.set(i, closed ? 'ok' : 'bad', closed ? 'ปิดแล้ว' : 'เปิดอยู่');
+    S.mapG.setAttribute('display', sh.map ? 'inline' : 'none');
+
+    /* เน้นช่องที่ยังอยู่ในเกณฑ์ */
+    S.cells.forEach(c => {
+      const v = c.a * c.b;
+      const inTol = v <= cfg.tol;
+      c.r.setAttribute('fill', sh.tol ? (inTol ? '#e8efd9' : band(v)) : '#f6eee3');
+      c.r.setAttribute('stroke-width', sh.tol && inTol ? 1.6 : 0.8);
+      c.r.setAttribute('stroke', sh.tol && inTol ? '#7fc278' : '#c6bbac');
+      c.t.setAttribute('display', sh.tol ? 'inline' : 'none');
     });
 
-    S.threats.forEach((t, i) => {
-      const on = i < cfg.threats;
-      t.g.setAttribute('opacity', on ? 1 : 0.22);
-      t.pill.tone(on ? 'hot' : 'dead');
+    /* ตำแหน่งจุด เลื่อนตามผลของกลยุทธ์ */
+    const used = {};
+    S.dots.forEach(d => {
+      const st = stateOf(cfg, d.r);
+      if (st.gone) { d.g.setAttribute('display', 'none'); return; }
+      d.g.setAttribute('display', 'inline');
+      const key = st.a + ',' + st.b;
+      const n = used[key] = (used[key] || 0) + 1;
+      const off = (n - 1) * 13;
+      const px = cx(st.b) - off * 0.5, py = cy(st.a) - off * 0.5;
+      d.c.setAttribute('cx', px); d.c.setAttribute('cy', py);
+      d.t.setAttribute('x', px); d.t.setAttribute('y', py + 4);
+      const over = score(st) > cfg.tol;
+      d.c.setAttribute('fill', !sh.tol ? '#fbf7f1' : over ? '#e5534b' : '#b2d491');
+      d.c.setAttribute('stroke-width', d.r.id === RISKS[S.cur].id ? 3 : 1.4);
+      d.t.setAttribute('fill', sh.tol && over ? '#fff' : '#1d1b18');
     });
 
-    const hit = ctx.stats.hit || 0;
-    S.assetG.classList.toggle('hot', hit > 0 && !cfg.cBackup);
-    S.assetPill.set(['ฐานข้อมูลลูกค้า', cfg.cBackup ? 'มีสำรอง' : 'ไม่มีสำรอง']);
-    S.assetPill.tone(cfg.cBackup ? 'ok' : 'hot');
+    /* ทะเบียนความเสี่ยง */
+    const pad = (s, n) => (String(s) + '                        ').slice(0, n);
+    S.regP.set(0, '#  ' + pad('RISK', 23) + pad('TYPE', 12) + (sh.map ? 'A×B' : ''), 'dim');
+    RISKS.forEach((r, i) => {
+      const st = stateOf(cfg, r);
+      const v = score(st);
+      const line = r.id + '  ' + pad(r.name, 23) + pad(r.type, 12) +
+        (sh.map ? (st.gone ? 'gone' : st.a + '×' + st.b + '=' + v) : '');
+      const cur = i === S.cur;
+      S.regP.set(i + 1, line, sh.tol && v > cfg.tol ? 'bad mono' : cur ? 'ok mono' : 'mono');
+    });
 
-    S.matrixG.setAttribute('display', cfg.matrix ? 'inline' : 'none');
-    if (cfg.matrix) S.matrix.at(likelihood(cfg), impact(cfg));
+    /* รายละเอียดความเสี่ยงที่กำลังทบทวน */
+    const r = RISKS[S.cur], st = stateOf(cfg, r);
+    S.detP.set(0, '#' + r.id + '  ' + r.name, 'ok');
+    S.detP.set(1, 'Factor: ' + r.factor, 'dim');
+    S.detP.set(2, 'Affects: ' + r.hit, 'dim');
+    if (st.strat === 'none') {
+      S.detP.set(3, sh.tol && r.a * r.b > cfg.tol ? 'Above the line — needs a response' : 'Within tolerance — no action needed',
+        sh.tol && r.a * r.b > cfg.tol ? 'bad' : 'ok');
+      S.detP.set(4, '', '');
+    } else {
+      S.detP.set(3, STRATS[st.strat].short + ': ' + r.fix[st.strat], 'mono');
+      S.detP.set(4, r.a * r.b + ' → ' + (st.gone ? 'removed' : score(st)) + '   cost ' + st.cost + ' units',
+        score(st) <= cfg.tol ? 'ok' : 'bad');
+    }
+
+    const over = RISKS.filter(x => score(stateOf(cfg, x)) > cfg.tol).length;
+    const budget = RISKS.reduce((s, x) => s + stateOf(cfg, x).cost, 0);
+    S.sumP.set(0, STRATS[cfg.strategy].name, cfg.strategy === 'none' ? 'dim' : 'ok');
+    S.sumP.set(1, !sh.tol ? 'Set a tolerance to see which risks need a response'
+      : over === 0 ? 'Everything is within A × B ≤ ' + cfg.tol + ', for ' + budget + ' units of budget'
+      : over + ' risk(s) still above A × B ≤ ' + cfg.tol + ', ' + budget + ' units spent so far',
+      !sh.tol ? 'dim' : over === 0 ? 'ok' : 'bad');
   }
 });
 })();

@@ -293,3 +293,8 @@ kbd{font:inherit;padding:0 4px;border:1px solid var(--line-strong);border-bottom
 /* ---------- BCM timeline (บท 14) ---------- */
 .tl-key{font:800 10px var(--font);fill:var(--muted)}
 .tl-val{font:700 10.5px var(--font);fill:var(--ink-2)}
+
+/* ---------- risk map 5x5 (บท 11) ---------- */
+.risk-dot{transition:cx .45s ease,cy .45s ease,fill .3s ease}
+.risk-num{font:800 11px var(--font);fill:var(--ink);pointer-events:none;transition:x .45s ease,y .45s ease}
+@media (prefers-reduced-motion:reduce){.risk-dot,.risk-num{transition:none}}

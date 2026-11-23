@@ -35,7 +35,7 @@ the course slides topic by topic and is the reference this structure is checked 
 | 08 | Incident Response | Incident Response Playbook | ⏳ |
 | 09 | Web Security ⭐ | SQL Injection · XSS | ⚠ built, Thai text |
 | 10 | Wireless LAN Security | Wireless LAN Security (802.11) | ⏳ |
-| 11 | IT Risk Management ⭐ | Threat, Vulnerability and Risk | ⚠ built, Thai text |
+| 11 | IT Risk Management ⭐ | IT Risk Management | ✅ built |
 | 12 | Standards and Frameworks | ISO 27001 and NIST CSF 2.0 | ⏳ |
 | 13 | Law and Compliance | Thai IT Law and PDPA | ⏳ |
 | 14 | Business Continuity ⭐ | Business Continuity Management | ✅ built |
@@ -54,13 +54,13 @@ and WPA2.
 
 ### Known gaps
 
-- Ten lessons still carry Thai body text and are converted one at a time. Several of them have
+- Nine lessons still carry Thai body text and are converted one at a time. Several of them have
   labels that collide once the simulation has been running a while; those are fixed as each lesson
   is rewritten, since the text changes anyway.
 - `sqli.js` and `xss.js` should merge into a single **A03 Injection** card, since OWASP Top 10 2021
   folded XSS into Injection, and then grow into the full A01–A10 set.
-- Next on the content reference list: the 5×5 Risk Map with the four response strategies, then the
-  OWASP Top 10 2021 board that merges the SQL injection and XSS lessons into one A03 card.
+- Next on the content reference list: the OWASP Top 10 2021 board, which also merges the SQL
+  injection and XSS lessons into a single A03 Injection card, as the 2021 set does.
 
 ## Using the site
 
