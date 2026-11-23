@@ -255,27 +255,31 @@ function keyIcon(parent, cx, cy, kind, scale = 1) {
 /* โครงคอร์สตาม Course Outline ของรายวิชา 01076042 Information and Computer Security
    ผศ.ดร. ธนัญชัย ตรีภาค · คณะวิศวกรรมศาสตร์ สจล. */
 const CATALOG = [
-  { num: '01', name: 'Information Systems',       color: '#fcdcbd', ids: ['infosys'] },
-  { num: '02', name: 'Security Principles',       color: '#cfe3b2', ids: ['cia', 'mfa', 'rbac'] },
-  { num: '03', name: 'Computer Networking',       color: '#d6e5f6', ids: ['netdiagram'] },
-  { num: '04', name: 'Firewall and Policy',       color: '#e7ddf5', ids: ['firewall'] },
-  { num: '05', name: 'Network Security Tools',    color: '#cfe3b2', ids: ['nettools'] },
-  { num: '06', name: 'Incident and Response',     color: '#f8d5cf', ids: ['incident'] },
-  { num: '07', name: 'Web Technology Security',   color: '#d6e5f6', ids: ['sqli', 'xss'] },
-  { num: '08', name: 'Wireless LAN Security',     color: '#fde3a7', ids: ['wireless'] },
-  { num: '09', name: 'IT Risk Management',        color: '#fcdcbd', ids: ['risk'] },
-  { num: '10', name: 'Standards and Procedures',  color: '#e7ddf5', ids: ['iso27001'] },
-  { num: '11', name: 'Law and Compliance',        color: '#f8d5cf', ids: ['law'] },
-  { num: '12', name: 'Business Continuity',       color: '#cfe3b2', ids: ['bcm'] },
-  { num: 'A',  name: 'Appendix: Cryptography',    color: '#ddd3c5', ids: ['symmetric', 'asymmetric', 'hashing', 'tls'] }
+  { num: '01', name: 'Introduction',              color: '#f6e6c9', ids: ['timeline'] },
+  { num: '02', name: 'IT Systems and Architecture', color: '#fcdcbd', ids: ['infosys'] },
+  { num: '03', name: 'CIA / AAA / PDR',           color: '#cfe3b2', ids: ['cia', 'mfa', 'rbac'] },
+  { num: '04', name: 'Computer Networking',       color: '#d6e5f6', ids: ['netdiagram'] },
+  { num: '05', name: 'Network Attack',            color: '#f8d5cf', ids: ['netattack'] },
+  { num: '06', name: 'Firewall and Policy',       color: '#e7ddf5', ids: ['firewall'] },
+  { num: '07', name: 'Security Tools',            color: '#cfe3b2', ids: ['nettools'] },
+  { num: '08', name: 'Incident Response',         color: '#f8d5cf', ids: ['incident'] },
+  { num: '09', name: 'Web Security',              color: '#d6e5f6', ids: ['sqli', 'xss'] },
+  { num: '10', name: 'Wireless LAN Security',     color: '#fde3a7', ids: ['wireless'] },
+  { num: '11', name: 'IT Risk Management',        color: '#fcdcbd', ids: ['risk'] },
+  { num: '12', name: 'Standards and Frameworks',  color: '#e7ddf5', ids: ['iso27001'] },
+  { num: '13', name: 'Law and Compliance',        color: '#f8d5cf', ids: ['law'] },
+  { num: '14', name: 'Business Continuity',       color: '#cfe3b2', ids: ['bcm'] },
+  { num: 'T',  name: 'Toolbox: Cryptography',     color: '#ddd3c5', ids: ['symmetric', 'asymmetric', 'hashing', 'tls'] }
 ];
 const SOON = {
-  netdiagram: 'Network Diagrams and Attacks',
-  nettools: 'Network Security Tools',
-  incident: 'Incident Response',
+  timeline: 'Security Timeline, 1975 to now',
+  netdiagram: 'Networking and Network Diagrams',
+  netattack: 'Network Attacks and Scanning',
+  nettools: 'Monitoring, IDS and IPS',
+  incident: 'Incident Response Playbook',
   wireless: 'Wireless LAN Security (802.11)',
-  iso27001: 'ISO/IEC 27001 and Procedures',
-  law: 'Computer Law and PDPA',
+  iso27001: 'ISO 27001 and NIST CSF 2.0',
+  law: 'Thai IT Law and PDPA',
   bcm: 'Business Continuity and DR'
 };
 const GLOSSARY = [

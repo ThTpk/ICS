@@ -20,31 +20,45 @@ no ES modules and no `fetch`.
 
 ## Course structure
 
-Modules follow the course outline (slides `00 Course Outline`).
+The fourteen topics come from [`content/ICS-CONTENT.md`](content/ICS-CONTENT.md), which summarises
+the course slides topic by topic and is the reference this structure is checked against.
 
-| # | Module | Lessons | Status |
+| # | Topic | Lessons | Status |
 |---|---|---|---|
-| 01 | Information Systems | Information Systems | ✅ built |
-| 02 | Security Principles | CIA Triad · MFA · RBAC | ⚠ built, Thai text |
-| 03 | Computer Networking | Network Diagrams and Attacks | ⏳ |
-| 04 | Firewall and Policy | Firewall and Traffic Filtering | ⚠ built, Thai text |
-| 05 | Network Security Tools | Network Security Tools | ⏳ |
-| 06 | Incident and Response | Incident Response | ⏳ |
-| 07 | Web Technology Security | SQL Injection · XSS | ⚠ built, Thai text |
-| 08 | Wireless LAN Security | Wireless LAN Security (802.11) | ⏳ |
-| 09 | IT Risk Management | Threat, Vulnerability and Risk | ⚠ built, Thai text |
-| 10 | Standards and Procedures | ISO/IEC 27001 and Procedures | ⏳ |
-| 11 | Law and Compliance | Computer Law and PDPA | ⏳ |
-| 12 | Business Continuity | Business Continuity and DR | ⏳ |
-| A | Appendix: Cryptography | Symmetric · Asymmetric · Hashing · TLS | ⚠ built, Thai text |
+| 01 | Introduction | Security Timeline, 1975 to now | ⏳ |
+| 02 | IT Systems and Architecture | Information Systems | ✅ built |
+| 03 | CIA / AAA / PDR ⭐ | CIA Triad · MFA · RBAC | ⚠ built, Thai text |
+| 04 | Computer Networking | Networking and Network Diagrams | ⏳ |
+| 05 | Network Attack | Network Attacks and Scanning | ⏳ |
+| 06 | Firewall and Policy ⭐ | Firewall and Traffic Filtering | ⚠ built, Thai text |
+| 07 | Security Tools | Monitoring, IDS and IPS | ⏳ |
+| 08 | Incident Response | Incident Response Playbook | ⏳ |
+| 09 | Web Security ⭐ | SQL Injection · XSS | ⚠ built, Thai text |
+| 10 | Wireless LAN Security | Wireless LAN Security (802.11) | ⏳ |
+| 11 | IT Risk Management ⭐ | Threat, Vulnerability and Risk | ⚠ built, Thai text |
+| 12 | Standards and Frameworks | ISO 27001 and NIST CSF 2.0 | ⏳ |
+| 13 | Law and Compliance | Thai IT Law and PDPA | ⏳ |
+| 14 | Business Continuity ⭐ | Business Continuity and DR | ⏳ |
+| T | Toolbox: Cryptography | Symmetric · Asymmetric · Hashing · TLS | ⚠ built, Thai text |
 
-**Lesson 01 — Information Systems** follows the `01 Information Systems` slides: the four TOGAF
+⭐ marks the topics the content reference calls the core of the subject.
+
+**Lesson 02 — Information Systems** follows the `01 Information Systems` slides: the four TOGAF
 architecture layers (Business, Application, Data, Technology), alignment between them, and why an
 asset missing from the inventory cannot be defended. It answers the topic's guiding question —
 *to look after the registration system, what should the administrator know about it?*
 
-The cryptography lessons are not a topic in the course outline, so they were moved to an appendix
-rather than deleted. They still support the TLS and web-security material.
+Cryptography is not a topic of its own in this course. The four crypto lessons are kept as a
+toolbox that topics 03, 09 and 10 draw on — Confidentiality and Integrity, Heartbleed and TLS,
+and WPA2.
+
+### Known gaps
+
+- Eleven lessons still carry Thai body text and are converted one at a time.
+- `sqli.js` and `xss.js` should merge into a single **A03 Injection** card, since OWASP Top 10 2021
+  folded XSS into Injection, and then grow into the full A01–A10 set.
+- The content reference ranks the highest-value pieces still to build: Firewall Rule Sandbox,
+  BCM Timeline (RPO / RTO / WRT / MTD), and the 5×5 Risk Map with the four response strategies.
 
 ## Using the site
 
