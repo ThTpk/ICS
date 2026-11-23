@@ -298,3 +298,10 @@ kbd{font:inherit;padding:0 4px;border:1px solid var(--line-strong);border-bottom
 .risk-dot{transition:cx .45s ease,cy .45s ease,fill .3s ease}
 .risk-num{font:800 11px var(--font);fill:var(--ink);pointer-events:none;transition:x .45s ease,y .45s ease}
 @media (prefers-reduced-motion:reduce){.risk-dot,.risk-num{transition:none}}
+
+/* ---------- OWASP board (บท 09) ---------- */
+.ow-code{font:800 11px var(--font);fill:var(--muted)}
+.ow-name{font:600 11.5px var(--font);fill:var(--ink-2)}
+.ow-code.on,.ow-name.on{fill:var(--violet-ink);font-weight:800}
+.owasp-row{transition:transform .4s ease}
+@media (prefers-reduced-motion:reduce){.owasp-row{transition:none}}

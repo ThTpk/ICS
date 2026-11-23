@@ -33,7 +33,7 @@ the course slides topic by topic and is the reference this structure is checked 
 | 06 | Firewall and Policy ⭐ | Firewall and Policy | ✅ built |
 | 07 | Security Tools | Monitoring, IDS and IPS | ⏳ |
 | 08 | Incident Response | Incident Response Playbook | ⏳ |
-| 09 | Web Security ⭐ | SQL Injection · XSS | ⚠ built, Thai text |
+| 09 | Web Security ⭐ | OWASP Top 10 ✅ · SQL Injection · XSS | ⚠ two still Thai |
 | 10 | Wireless LAN Security | Wireless LAN Security (802.11) | ⏳ |
 | 11 | IT Risk Management ⭐ | IT Risk Management | ✅ built |
 | 12 | Standards and Frameworks | ISO 27001 and NIST CSF 2.0 | ⏳ |
@@ -59,8 +59,10 @@ and WPA2.
   is rewritten, since the text changes anyway.
 - `sqli.js` and `xss.js` should merge into a single **A03 Injection** card, since OWASP Top 10 2021
   folded XSS into Injection, and then grow into the full A01–A10 set.
-- Next on the content reference list: the OWASP Top 10 2021 board, which also merges the SQL
-  injection and XSS lessons into a single A03 Injection card, as the 2021 set does.
+- The content reference suggested replacing the SQL injection and XSS lessons with a single A03
+  card. The board carries that card, but both lessons were kept as the deep dives behind it rather
+  than deleted — the overview and the walkthrough do different jobs.
+- Still to translate: CIA, MFA, RBAC, SQL Injection, XSS and the four cryptography lessons.
 
 ## Using the site
 

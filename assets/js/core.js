@@ -263,7 +263,7 @@ const CATALOG = [
   { num: '06', name: 'Firewall and Policy',       color: '#e7ddf5', ids: ['firewall'] },
   { num: '07', name: 'Security Tools',            color: '#cfe3b2', ids: ['nettools'] },
   { num: '08', name: 'Incident Response',         color: '#f8d5cf', ids: ['incident'] },
-  { num: '09', name: 'Web Security',              color: '#d6e5f6', ids: ['sqli', 'xss'] },
+  { num: '09', name: 'Web Security',              color: '#d6e5f6', ids: ['websec', 'sqli', 'xss'] },
   { num: '10', name: 'Wireless LAN Security',     color: '#fde3a7', ids: ['wireless'] },
   { num: '11', name: 'IT Risk Management',        color: '#fcdcbd', ids: ['risk'] },
   { num: '12', name: 'Standards and Frameworks',  color: '#e7ddf5', ids: ['iso27001'] },
