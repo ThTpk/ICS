@@ -27,7 +27,7 @@ the course slides topic by topic and is the reference this structure is checked 
 |---|---|---|---|
 | 01 | Introduction | Security Timeline, 1975 to now | ⏳ |
 | 02 | IT Systems and Architecture | Information Systems | ✅ built |
-| 03 | CIA / AAA / PDR ⭐ | CIA Triad · MFA · RBAC | ⚠ built, Thai text |
+| 03 | CIA / AAA / PDR ⭐ | CIA Triad ✅ · MFA · RBAC | ⚠ two still Thai |
 | 04 | Computer Networking | Networking and Network Diagrams | ⏳ |
 | 05 | Network Attack | Network Attacks and Scanning | ⏳ |
 | 06 | Firewall and Policy ⭐ | Firewall and Policy | ✅ built |
@@ -62,7 +62,10 @@ and WPA2.
 - The content reference suggested replacing the SQL injection and XSS lessons with a single A03
   card. The board carries that card, but both lessons were kept as the deep dives behind it rather
   than deleted — the overview and the walkthrough do different jobs.
-- Still to translate: CIA, MFA, RBAC, SQL Injection, XSS and the four cryptography lessons.
+- Still to translate: MFA, RBAC, SQL Injection, XSS and the four cryptography lessons.
+- Topic 03 is named CIA / AAA / PDR but only CIA has a lesson of its own. AAA is covered
+  indirectly by the MFA and RBAC lessons, and PDR — protect, detect, respond — has none yet,
+  even though the slides treat all nine principles as one table.
 
 ## Using the site
 
