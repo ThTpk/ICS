@@ -297,7 +297,8 @@ ICS.register({
     items.sort((a, b) => a.k - b.k).forEach(it => it.draw());
 
     S.zp = {};
-    S.zp.untrust = ctx.pill(L.labels, 233, 300, [ZONES.untrust.name, ZONES.untrust.sub]);
+    /* เลื่อนซ้ายให้พ้นพื้นหลังป้ายไฟร์วอลล์ ซึ่งกว้างขึ้นตามโหมดที่เลือก */
+    S.zp.untrust = ctx.pill(L.labels, 210, 300, [ZONES.untrust.name, ZONES.untrust.sub]);
     S.zp.dmz = ctx.pill(L.labels, 636, 205, [ZONES.dmz.name], 'start');
     S.zp.trust = ctx.pill(L.labels, 636, 283, [ZONES.trust.name], 'start');
     S.fwPill = ctx.pill(L.labels, 400, 300, ['Firewall', '']);

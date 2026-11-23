@@ -399,7 +399,8 @@ function makeCtx() {
       c._fa = c._fa.filter(f => sim.t - f.t < 800);
       const near = c._fa.filter(f => Math.abs(f.x - pt[0]) < 34 && Math.abs(f.y - pt[1]) < 44).length;
       c._fa.push({ x: pt[0], y: pt[1], t: sim.t });
-      const baseY = pt[1] - Math.min(near, 3) * 15;
+      /* ป้ายลอยขึ้นอีก 26px ระหว่างจางหาย อย่าให้หลุดขอบบนของ viewBox */
+      const baseY = Math.max(pt[1] - Math.min(near, 3) * 15, 108);
 
       const lay = c.L.fx || (c.L.fx = el('g', {}, svg));
       const e = el('text', { x: pt[0], y: baseY, class: 'badge ' + cls, 'text-anchor': 'middle' }, lay);

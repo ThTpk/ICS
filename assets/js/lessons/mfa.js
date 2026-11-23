@@ -1,7 +1,7 @@
 /* ============================================================
-   บทที่ 5.1 — การยืนยันตัวตนหลายชั้น (MFA)
-   รหัสผ่าน → OTP ทาง SMS → แอป TOTP → Passkey
-   แต่ละชั้นกันอะไรได้ และกันอะไรไม่ได้
+   Lesson 3.2 — Multi-Factor Authentication
+   password -> SMS OTP -> TOTP app -> passkey
+   what each factor stops, and what it does not
    ============================================================ */
 (function () {
 const USR = [-0.8, 4.2];
@@ -10,131 +10,133 @@ const GATE = [[2.45, 3.25], [4.05, 1.65], [5.65, 0.05]];
 const ACCT = [7.05, -1.35];
 
 const ATTACKS = {
-  stuffing: 'ใช้รหัสที่รั่วจากเว็บอื่น',
-  simswap: 'ย้ายเบอร์มือถือ (SIM swap)',
-  phish: 'หน้าเว็บปลอมถามรหัสสดๆ'
+  stuffing: 'Passwords leaked from another site',
+  simswap: 'SIM swap, the number moved',
+  phish: 'Live phishing page'
 };
+/* ป้ายสั้นสำหรับติดบนตัวผู้โจมตี ส่วนประโยคเต็มอยู่ใน ATTACKS */
+const ATTACK_SHORT = { stuffing: 'leaked passwords', simswap: 'SIM swap', phish: 'live phishing' };
 const FACTOR_NAME = {
-  pass: 'รหัสผ่านอย่างเดียว',
-  sms: 'รหัสผ่าน + OTP ทาง SMS',
-  totp: 'รหัสผ่าน + แอป TOTP',
-  passkey: 'Passkey (อุปกรณ์ + ชีวมิติ)'
+  pass: 'Password only',
+  sms: 'Password + SMS OTP',
+  totp: 'Password + TOTP app',
+  passkey: 'Passkey (device + biometric)'
 };
 const activeGates = cfg => cfg.factors === 'pass' ? [0] : cfg.factors === 'passkey' ? [2] : [0, 1];
-const gateName = (cfg, i) => i === 0 ? 'รหัสผ่าน' : i === 1 ? (cfg.factors === 'sms' ? 'OTP ทาง SMS' : 'แอป TOTP') : 'Passkey';
+const gateName = (cfg, i) => i === 0 ? 'Password' : i === 1 ? (cfg.factors === 'sms' ? 'SMS OTP' : 'TOTP app') : 'Passkey';
 
-/* ประตูนี้หยุดการโจมตีแบบนี้ได้หรือไม่ */
+/* does this gate stop this attack? */
 function blocks(cfg, gate, attack) {
-  if (gate === 0) return false;                                   // รหัสผ่านรั่วไปแล้ว ผ่านได้เสมอ
+  if (gate === 0) return false;                                   // the password already leaked, always passes
   if (gate === 1) {
-    if (cfg.factors === 'sms') return attack === 'stuffing';      // SIM swap และฟิชชิ่งยังผ่าน
-    return attack === 'stuffing' || attack === 'simswap';         // TOTP กัน SIM swap ได้ แต่ฟิชชิ่งยังผ่าน
+    if (cfg.factors === 'sms') return attack === 'stuffing';      // SIM swap and phishing still get through
+    return attack === 'stuffing' || attack === 'simswap';         // TOTP stops SIM swap, phishing still gets through
   }
-  return true;                                                    // Passkey ผูกกับโดเมน กันได้ทั้งหมด
+  return true;                                                    // a passkey is bound to the domain, stops all three
 }
 
 ICS.register({
   id: 'mfa',
-  title: 'การยืนยันตัวตนหลายชั้น (MFA)',
-  sub: 'เพิ่มปัจจัยที่สองช่วยได้มหาศาล แต่ไม่ใช่ทุกปัจจัยที่สองจะกันการโจมตีแบบเดียวกัน',
+  title: 'Multi-Factor Authentication',
+  sub: 'Authentication answers one question: are you really who you claim to be? Adding a second factor helps enormously, but not every second factor stops the same attack.',
   minutes: 12,
-  level: 'ระดับกลาง',
+  level: 'Intermediate',
 
   legend: [
-    ['res', 'ผู้ใช้ตัวจริง'],
-    ['bad', 'ผู้โจมตี'],
-    ['hollow', 'ประตูที่บล็อกได้'],
-    ['key sq', 'ปัจจัยที่เปิดใช้']
+    ['res', 'The real user'],
+    ['bad', 'The attacker'],
+    ['hollow', 'Gate that blocks'],
+    ['key sq', 'Factor in use']
   ],
 
   metrics: [
-    { key: 'ok', label: 'ผู้ใช้จริงเข้าได้' },
-    { key: 'breach', label: 'ผู้โจมตียึดบัญชี', bad: true, tone: c => (c.stats.breach || 0) > 0 ? 'warn' : '' },
-    { key: 'blocked', label: 'ถูกบล็อก', tone: c => (c.stats.blocked || 0) > 0 ? 'lit' : '' },
+    { key: 'ok', label: 'Real user got in' },
+    { key: 'breach', label: 'Account taken over', bad: true, tone: c => (c.stats.breach || 0) > 0 ? 'warn' : '' },
+    { key: 'blocked', label: 'Attacker blocked', tone: c => (c.stats.blocked || 0) > 0 ? 'lit' : '' },
     {
-      key: 'rate', label: 'อัตราที่ผู้โจมตีทะลุ',
+      key: 'rate', label: 'Attacker success rate',
       fmt: c => { const t = (c.stats.breach || 0) + (c.stats.blocked || 0); return t ? Math.round((c.stats.breach || 0) * 100 / t) + '%' : '–'; },
       tone: c => { const t = (c.stats.breach || 0) + (c.stats.blocked || 0); return t > 3 && !(c.stats.breach || 0) ? 'lit' : (c.stats.breach || 0) ? 'warn' : ''; }
     },
-    { key: 'f', label: 'ปัจจัยที่ใช้', fmt: c => FACTOR_NAME[c.cfg.factors].split(' (')[0] }
+    { key: 'f', label: 'Factors in use', fmt: c => FACTOR_NAME[c.cfg.factors].split(' (')[0] }
   ],
 
   learn: [
-    ['รหัสผ่านเดี่ยวแพ้การใช้รหัสที่รั่วมาจากที่อื่น', 0],
-    ['ปัจจัยสามแบบ: สิ่งที่รู้ สิ่งที่มี สิ่งที่เป็น', 1],
-    ['OTP ทาง SMS ผูกกับเบอร์ ไม่ใช่กับตัวคุณ', 2],
-    ['TOTP กัน SIM swap ได้ แต่ยังถูกฟิชชิ่งสดได้', 4],
-    ['Passkey ผูกกับโดเมน ฟิชชิ่งจึงใช้ไม่ได้', 5]
+    ['A password alone loses to passwords leaked elsewhere', 0],
+    ['Three kinds of factor: know, have, are', 1],
+    ['An SMS code is tied to a number, not to you', 2],
+    ['TOTP stops SIM swap but not live phishing', 4],
+    ['A passkey is bound to the domain, so phishing fails', 5]
   ],
 
   steps: [
     {
-      tag: 'problem', label: 'รหัสเดี่ยว', title: 'รหัสผ่านอย่างเดียวไม่พออีกต่อไป',
+      tag: 'problem', label: 'Password only', title: 'A password on its own is no longer enough',
       body: [
-        'ประตูมีบานเดียวคือรหัสผ่าน ผู้โจมตีไม่ได้เดาสุ่มด้วยซ้ำ เขาเอารหัสที่รั่วจากเว็บอื่นมาลองตรงๆ เพราะคนส่วนใหญ่ใช้รหัสซ้ำกันหลายเว็บ วิธีนี้เรียกว่า credential stuffing',
-        'ผู้ใช้ตัวจริงกับผู้โจมตีถือกุญแจดอกเดียวกันเป๊ะ ระบบจึงแยกไม่ออกเลยว่าใครเป็นใคร ดูช่อง "อัตราที่ผู้โจมตีทะลุ" ที่ขึ้นไปถึงร้อยเปอร์เซ็นต์'
+        'One gate, one password. The attacker is not guessing: they are replaying passwords leaked from some other site, because most people reuse them. This is called credential stuffing and it works often enough to be automated.',
+        'The real user and the attacker are holding exactly the same key, so the system has no way to tell them apart. Watch the attacker success rate sit at one hundred percent.'
       ],
-      note: ['เชื่อมกับบทแฮช', 'นี่คือเหตุผลที่การเก็บรหัสผ่านให้ดีเป็นเรื่องของทั้งอุตสาหกรรม ไม่ใช่ของเว็บใดเว็บหนึ่ง เพราะรหัสที่รั่วจากเว็บหนึ่งถูกเอาไปลองกับทุกเว็บที่เหลือ'],
-      changed: ['ปัจจัย: รหัสผ่านอย่างเดียว', 'ผู้โจมตี: ใช้รหัสที่รั่วมา'],
+      note: ['This is why password storage matters', 'A leak at one site becomes an attack on every other site. That is an industry-wide consequence of how one organisation stored its passwords, which is the subject of the hashing lesson.'],
+      changed: ['Factors: password only', 'Attacker: using leaked passwords'],
       cfg: { factors: 'pass', attack: 'stuffing' }
     },
     {
-      tag: 'technique', label: 'OTP SMS', title: 'เพิ่มปัจจัยที่สอง: รหัสที่ส่งทาง SMS',
+      tag: 'technique', label: 'SMS OTP', title: 'Add a second factor: a code sent by SMS',
       body: [
-        'ปัจจัยในการยืนยันตัวตนมีสามแบบ <code>สิ่งที่รู้</code> เช่นรหัสผ่าน <code>สิ่งที่มี</code> เช่นโทรศัพท์หรือกุญแจฮาร์ดแวร์ และ <code>สิ่งที่เป็น</code> เช่นลายนิ้วมือ การใช้สองแบบที่ต่างชนิดกันเรียกว่า MFA',
-        'เพิ่มประตูที่สองเป็นรหัสหกหลักที่ส่งไปยังเบอร์ของเจ้าของบัญชี ผู้โจมตีมีรหัสผ่านก็จริง แต่ไม่มีโทรศัพท์เครื่องนั้น จึงถูกหยุดที่ประตูที่สองทุกครั้ง'
+        'Authentication factors come in three kinds. <code>Something you know</code>, like a password. <code>Something you have</code>, like a phone or a hardware token. <code>Something you are</code>, like a fingerprint. Using two of different kinds is what makes it multi-factor.',
+        'The second gate is a six digit code sent to the account holder\'s number. The attacker has the password but not that phone, so they are stopped at the second gate every time.'
       ],
-      note: ['สองรหัสผ่านไม่ใช่ MFA', 'ถามรหัสผ่านแล้วถามคำถามลับต่อ ยังเป็น "สิ่งที่รู้" ทั้งคู่ ซึ่งรั่วไปพร้อมกันได้ ปัจจัยที่เพิ่มต้องเป็นคนละชนิดจึงจะมีความหมาย'],
-      changed: ['เพิ่มปัจจัย: OTP ทาง SMS'],
+      note: ['Two passwords are not MFA', 'A password followed by a security question is still two things you know, and both leak together. The added factor has to be a different kind to mean anything.'],
+      changed: ['Added factor: SMS OTP'],
       cfg: { factors: 'sms', attack: 'stuffing' }
     },
     {
-      tag: 'attack', label: 'SIM swap', title: 'ย้ายเบอร์มือถือมาที่ซิมของตัวเอง',
+      tag: 'attack', label: 'SIM swap', title: 'Move the phone number to a new SIM',
       body: [
-        'จุดอ่อนของ SMS คือมันผูกกับหมายเลขโทรศัพท์ ไม่ได้ผูกกับตัวคุณ ผู้โจมตีจึงโทรไปหาผู้ให้บริการ อ้างว่าทำซิมหาย แล้วขอย้ายเบอร์มาที่ซิมใหม่ของตัวเอง',
-        'ตั้งแต่วินาทีนั้น OTP ทุกข้อความวิ่งไปที่เครื่องของผู้โจมตี ประตูที่สองเปิดให้เขาเดินผ่านอย่างถูกต้องตามระบบทุกประการ'
+        'The weakness of SMS is that it is tied to a telephone number, not to you. The attacker calls the mobile operator, claims the SIM was lost, and has the number moved to a SIM in their possession.',
+        'From that moment every code arrives on the attacker\'s device. The second gate opens for them, correctly, according to the rules the system was given.'
       ],
-      note: ['ยังดีกว่าไม่มี', 'ถึงจะมีช่องโหว่นี้ แต่ OTP ทาง SMS ก็ยังหยุดการโจมตีอัตโนมัติจำนวนมหาศาลได้ ถ้าเลือกได้ระหว่างไม่มีอะไรเลยกับ SMS ให้เลือก SMS เสมอ'],
-      changed: ['ผู้โจมตี: ย้ายเบอร์มือถือสำเร็จ'],
+      note: ['Still better than nothing', 'Despite this weakness, SMS codes stop an enormous volume of automated attacks. Given a choice between nothing and SMS, take SMS every time.'],
+      changed: ['Attacker: SIM swap succeeded'],
       cfg: { factors: 'sms', attack: 'simswap' }
     },
     {
-      tag: 'technique', label: 'แอป TOTP', title: 'ย้ายรหัสมาสร้างในเครื่อง ไม่ต้องส่งผ่านเครือข่าย',
+      tag: 'technique', label: 'TOTP app', title: 'Generate the code on the device instead',
       body: [
-        'แอปอย่าง Google Authenticator เก็บความลับร่วมไว้ในเครื่อง แล้วคำนวณรหัสหกหลักใหม่ทุกสามสิบวินาทีจากความลับนั้นบวกเวลาปัจจุบัน ไม่มีอะไรถูกส่งผ่านเครือข่ายให้ดักได้',
-        'เบอร์โทรศัพท์จึงไม่เกี่ยวข้องอีกต่อไป การย้ายซิมไม่ช่วยอะไรผู้โจมตีเลย เขาถูกหยุดที่ประตูที่สองอีกครั้ง'
+        'An authenticator app holds a shared secret on the device and computes a fresh six digit code every thirty seconds from that secret plus the current time. Nothing travels over the network to be intercepted.',
+        'The phone number is now irrelevant, so moving the SIM gains the attacker nothing. They are stopped at the second gate again.'
       ],
-      note: ['ข้อควรระวังของ TOTP', 'ความลับร่วมอยู่ในเครื่อง ถ้าทำเครื่องหายโดยไม่มีรหัสสำรองก็เข้าบัญชีไม่ได้ และถ้าสกรีนช็อต QR ตอนตั้งค่าแล้วเก็บไว้ในคลาวด์ ความลับนั้นก็รั่วไปพร้อมคลาวด์ได้'],
-      changed: ['เปลี่ยนปัจจัยที่สองเป็นแอป TOTP'],
+      note: ['What TOTP costs', 'The shared secret lives on the device. Lose the device without recovery codes and you are locked out, and a screenshot of the setup QR code stored in the cloud leaks the secret with the cloud.'],
+      changed: ['Second factor is now a TOTP app'],
       cfg: { factors: 'totp', attack: 'simswap' }
     },
     {
-      tag: 'attack', label: 'ฟิชชิ่งสด', title: 'หน้าเว็บปลอมที่ส่งรหัสต่อแบบเรียลไทม์',
+      tag: 'attack', label: 'Live phishing', title: 'A fake page that relays the code in real time',
       body: [
-        'ผู้โจมตีทำหน้าล็อกอินปลอมที่เหมือนของจริงทุกพิกเซล เหยื่อกรอกรหัสผ่านและรหัสหกหลักลงไป หน้าปลอมส่งต่อให้เว็บจริงทันทีภายในไม่กี่วินาที ก่อนรหัสจะหมดอายุ',
-        'รหัส TOTP ถูกต้องจริงทุกหลัก ประตูที่สองจึงเปิดให้ ปัญหาไม่ได้อยู่ที่ความแข็งแรงของรหัส แต่อยู่ที่ไม่มีใครตรวจว่าเหยื่อกำลังกรอกให้ "เว็บไหน"'
+        'The attacker builds a login page identical to the real one. The victim types their password and the six digit code, and the fake page forwards both to the real site within seconds, before the code expires.',
+        'The TOTP code is completely genuine. The second gate opens because it should. The problem was never the strength of the code: nothing ever checked which site the victim was typing it into.'
       ],
-      note: ['ชื่อของเทคนิคนี้', 'เรียกว่า adversary-in-the-middle มีชุดเครื่องมือสำเร็จรูปขายกันทั่วไป ทำให้การฟิชชิ่งผ่าน MFA แบบรหัสหกหลักกลายเป็นเรื่องธรรมดาไปแล้ว'],
-      changed: ['ผู้โจมตี: ฟิชชิ่งแบบส่งต่อสดๆ'],
+      note: ['The name for this', 'Adversary-in-the-middle. Ready-made toolkits for it are sold openly, which is what turned phishing through six-digit MFA from a notable attack into a routine one.'],
+      changed: ['Attacker: live relay phishing'],
       cfg: { factors: 'totp', attack: 'phish' }
     },
     {
-      tag: 'technique', label: 'Passkey', title: 'Passkey: ปัจจัยที่รู้ว่ากำลังคุยกับเว็บไหน',
+      tag: 'technique', label: 'Passkey', title: 'A factor that knows which site it is talking to',
       body: [
-        'Passkey คือกุญแจคู่จากบทที่ 2.2 ที่เก็บ private key ไว้ในชิปของอุปกรณ์ และปลดล็อกด้วยลายนิ้วมือหรือใบหน้า การล็อกอินคือการเซ็นข้อความที่เว็บส่งมา ไม่มีรหัสอะไรให้พิมพ์หรือให้บอกใคร',
-        'ที่สำคัญที่สุดคือลายเซ็นนั้นผูกกับชื่อโดเมนที่ขอมาด้วย หน้าเว็บปลอมที่อยู่คนละโดเมนจึงไม่ได้ลายเซ็นที่ใช้ได้เลย ฟิชชิ่งหยุดทำงานไปเองโดยไม่ต้องอาศัยความระวังของผู้ใช้'
+        'A passkey is the key pair from the asymmetric lesson, with the private key held in the device\'s secure chip and unlocked by a fingerprint or face. Logging in means signing a challenge from the site. There is no code to type and none to tell anyone.',
+        'The crucial part is that the signature is bound to the domain that asked for it. A fake page on a different domain cannot obtain a usable signature, so phishing stops working without relying on the user being careful.'
       ],
-      note: ['ทำไมถึงเป็นสองปัจจัยในตัวเดียว', 'มันรวม "สิ่งที่มี" คืออุปกรณ์ที่ถือ กับ "สิ่งที่เป็น" คือลายนิ้วมือหรือใบหน้าที่ใช้ปลดล็อกไว้ด้วยกัน จึงแทนทั้งรหัสผ่านและ OTP ได้พร้อมกัน'],
-      changed: ['เปลี่ยนมาใช้ Passkey'],
+      note: ['Why it counts as two factors', 'It combines something you have, the device, with something you are, the biometric that unlocks it. That is why it can replace both the password and the one-time code at once.'],
+      changed: ['Switched to passkeys'],
       cfg: { factors: 'passkey', attack: 'phish' }
     },
     {
-      tag: 'lab', label: 'ลองเอง', title: 'ลองเอง: จับคู่ปัจจัยกับการโจมตี',
+      tag: 'lab', label: 'Try it', title: 'Try it: match the factor against the attack',
       body: [
-        'ไล่สลับทุกคู่ดูว่าช่องไหนกันช่องไหนได้บ้าง จะเห็นตารางในหัวชัดขึ้นว่า SMS กันได้แค่การโจมตีอัตโนมัติ TOTP เพิ่มการกัน SIM swap และมีเพียง Passkey เท่านั้นที่กันฟิชชิ่งได้',
-        'ข้อสรุปที่ใช้ได้จริง ถ้าเลือกได้ให้เปิด Passkey ถ้ายังไม่มีให้ใช้แอป TOTP และถ้ามีแค่ SMS ก็ยังควรเปิด เพราะดีกว่าไม่มีอะไรเลยมาก'
+        'Work through every pair and the table in your head becomes clear: SMS stops only the automated attacks, TOTP adds protection against SIM swap, and only a passkey stops phishing.',
+        'The practical conclusion: turn on passkeys where they are offered, use an authenticator app where they are not, and if all that exists is SMS then still turn it on, because it is far better than nothing.'
       ],
-      note: ['อย่าลืมทางหนีไฟ', 'ช่องทางกู้บัญชีเมื่อทำอุปกรณ์หาย มักเป็นจุดที่อ่อนที่สุดของระบบทั้งหมด ถ้ากู้บัญชีได้ด้วยการตอบคำถามลับ MFA ที่แข็งแรงแค่ไหนก็ถูกข้ามได้ตรงนั้น'],
+      note: ['Do not forget the back door', 'Account recovery, for when the device is lost, is usually the weakest part of the whole system. If an account can be recovered by answering a security question, every one of these factors can be stepped around right there.'],
       changed: [],
       cfg: { factors: 'sms', attack: 'phish' },
       controls: ['factors', 'attack']
@@ -143,13 +145,13 @@ ICS.register({
 
   controls: {
     factors: {
-      type: 'seg', label: 'ปัจจัยที่บัญชีนี้เปิดใช้',
-      options: [['pass', 'รหัสผ่าน'], ['sms', '+ OTP SMS'], ['totp', '+ แอป TOTP'], ['passkey', 'Passkey']],
+      type: 'seg', label: 'Factors this account uses',
+      options: [['pass', 'Password'], ['sms', '+ SMS OTP'], ['totp', '+ TOTP app'], ['passkey', 'Passkey']],
       get: c => c.factors, set: (c, v) => { c.factors = v; }, reset: true
     },
     attack: {
-      type: 'seg', label: 'วิธีที่ผู้โจมตีใช้',
-      options: [['stuffing', 'รหัสที่รั่วมา'], ['simswap', 'SIM swap'], ['phish', 'ฟิชชิ่งสด']],
+      type: 'seg', label: 'Attack the adversary uses',
+      options: [['stuffing', 'Leaked passwords'], ['simswap', 'SIM swap'], ['phish', 'Live phishing']],
       get: c => c.attack, set: (c, v) => { c.attack = v; }, reset: true
     }
   },
@@ -179,11 +181,11 @@ ICS.register({
 
     const ug = ctx.el('g', {}, L.ents);
     Ac.desk(ug, USR[0], USR[1], 'orange', 1.1);
-    ctx.pill(L.labels, S.P.u[0] - 4, iso(USR[0], USR[1] + 0.95, 0)[1] + 14, ['ผู้ใช้ตัวจริง', 'ann']);
+    ctx.pill(L.labels, S.P.u[0] - 4, iso(USR[0], USR[1] + 0.95, 0)[1] + 14, ['Real user', 'ann']);
 
     const ag = ctx.el('g', {}, L.ents);
     Ac.attacker(ag, ATK[0], ATK[1]);
-    S.aPill = ctx.pill(L.labels, S.P.a[0] - 4, iso(ATK[0], ATK[1] + 0.9, 0)[1] + 14, ['ผู้โจมตี', '']);
+    S.aPill = ctx.pill(L.labels, S.P.a[0] - 4, iso(ATK[0], ATK[1] + 0.9, 0)[1] + 14, ['Attacker', '']);
 
     S.gates = GATE.map((g, i) => {
       const gg = ctx.el('g', {}, L.ents);
@@ -201,15 +203,16 @@ ICS.register({
 
     const cg = ctx.el('g', {}, L.ents);
     Ac.box(cg, ACCT[0], ACCT[1], { w: 1.3, h: 0.9, pal: 'violet', glyph: (p, c) => ctx.glyph.cert(p, c) });
-    S.acctPill = ctx.pill(L.labels, iso(ACCT[0], ACCT[1] + 1.2, 0)[0], iso(ACCT[0], ACCT[1] + 1.2, 0)[1] + 14, ['บัญชีของ ann', '']);
+    /* ป้ายบัญชีอยู่ต่ำลงมาหนึ่งแถว ไม่งั้นพื้นหลังจะไปทับป้ายของประตูสุดท้าย */
+    S.acctPill = ctx.pill(L.labels, iso(ACCT[0], ACCT[1] + 1.2, 0)[0], iso(ACCT[0], ACCT[1] + 1.2, 0)[1] + 42, ['Account', '']);
 
     S.setP = ctx.statusList(L.hud, {
-      x: 486, y: 74, w: 230, title: 'ปัจจัยที่เปิดใช้',
-      items: ['สิ่งที่รู้ · รหัสผ่าน', 'สิ่งที่มี · อุปกรณ์', 'สิ่งที่เป็น · ชีวมิติ']
+      x: 470, y: 74, w: 246, title: 'Factors in use',
+      items: ['Something you know', 'Something you have', 'Something you are']
     });
-    S.atkP = ctx.panel(L.hud, { x: 126, y: 76, w: 310, rows: 2, title: 'วิธีที่ผู้โจมตีใช้' });
-    S.logP = ctx.panel(L.hud, { x: 126, y: 334, w: 342, rows: 4, title: 'บันทึกการล็อกอิน', dark: true });
-    S.sumP = ctx.panel(L.hud, { x: 482, y: 334, w: 234, rows: 4, title: 'ปัจจัยนี้กันอะไรได้' });
+    S.atkP = ctx.panel(L.hud, { x: 126, y: 76, w: 310, rows: 2, title: 'Attack in use' });
+    S.logP = ctx.panel(L.hud, { x: 126, y: 334, w: 342, rows: 4, title: 'Login log', dark: true });
+    S.sumP = ctx.panel(L.hud, { x: 482, y: 334, w: 234, rows: 4, title: 'What this stops' });
   },
 
   tick(ctx, dt) {
@@ -219,7 +222,7 @@ ICS.register({
     if (ctx.timer('user', dt, 3400))
       ctx.launch([P.u, first], 'ok', { label: 'ann', meta: { leg: 'gate', gi: 0, gs, who: 'user' }, speed: 250 });
     if (ctx.timer('atk', dt, 2100))
-      ctx.launch([P.a, first], 'bad', { label: 'ผู้โจมตี', meta: { leg: 'gate', gi: 0, gs, who: 'atk' }, speed: 250 });
+      ctx.launch([P.a, first], 'bad', { label: 'attacker', meta: { leg: 'gate', gi: 0, gs, who: 'atk' }, speed: 250 });
   },
 
   arrive(ctx, p) {
@@ -230,28 +233,28 @@ ICS.register({
       const gi = m.gs[m.gi];
       if (m.who === 'atk' && blocks(cfg, gi, cfg.attack)) {
         ctx.bump('blocked'); ctx.puff(P.g[gi], 'ok');
-        ctx.float([P.g[gi][0], P.g[gi][1] - 26], 'บล็อก', 'ok');
-        push('✗ ผู้โจมตี ถูกหยุดที่ ' + gateName(cfg, gi), 'ok');
+        ctx.float([P.g[gi][0], P.g[gi][1] - 26], 'blocked', 'ok');
+        push('✗ attacker stopped at ' + gateName(cfg, gi), 'ok');
         return;
       }
       if (m.gi + 1 < m.gs.length) {
         ctx.launch([P.g[gi], P.g[m.gs[m.gi + 1]]], m.who === 'atk' ? 'bad' : 'ok',
-          { label: m.who === 'atk' ? 'ผู้โจมตี' : 'ann', meta: { leg: 'gate', gi: m.gi + 1, gs: m.gs, who: m.who }, speed: 250 });
+          { label: m.who === 'atk' ? 'attacker' : 'ann', meta: { leg: 'gate', gi: m.gi + 1, gs: m.gs, who: m.who }, speed: 250 });
         return;
       }
       ctx.launch([P.g[gi], P.acct], m.who === 'atk' ? 'bad' : 'ok',
-        { label: m.who === 'atk' ? 'ผู้โจมตี' : 'ann', meta: { leg: 'acct', who: m.who }, speed: 250 });
+        { label: m.who === 'atk' ? 'attacker' : 'ann', meta: { leg: 'acct', who: m.who }, speed: 250 });
       return;
     }
 
     if (m.leg === 'acct') {
       if (m.who === 'atk') {
         ctx.bump('breach'); ctx.ring(P.acct);
-        ctx.float([P.acct[0], P.acct[1] - 30], 'ยึดบัญชี', 'bad');
-        push('⚠ ผู้โจมตี ผ่านครบทุกชั้น — ยึดบัญชีได้', 'bad');
+        ctx.float([P.acct[0], P.acct[1] - 30], 'taken over', 'bad');
+        push('⚠ attacker passed every gate', 'bad');
       } else {
         ctx.bump('ok'); ctx.puff(P.acct, 'ok');
-        push('✓ ann ผ่านครบ ' + m_count(cfg) + ' ชั้น', 'ok');
+        push('✓ ann passed ' + m_count(cfg) + ' factor(s)', 'ok');
       }
     }
   },
@@ -263,36 +266,36 @@ ICS.register({
     S.gates.forEach((g, i) => {
       const on = gs.includes(i);
       g.g.setAttribute('opacity', on ? 1 : 0.22);
-      g.pill.set([on ? gateName(cfg, i) : '(ไม่ใช้)']);
+      g.pill.set([on ? gateName(cfg, i) : '(not used)']);
       g.pill.tone(on ? (blocks(cfg, i, cfg.attack) ? 'ok' : i === 0 ? '' : 'hot') : 'dead');
     });
 
-    S.aPill.set(['ผู้โจมตี', ATTACKS[cfg.attack].split(' (')[0]]);
+    S.aPill.set(['Attacker', ATTACK_SHORT[cfg.attack]]);
     S.aPill.tone('hot');
     const breached = (ctx.stats.breach || 0) > 0;
-    S.acctPill.set(['บัญชีของ ann', breached ? 'ถูกยึดแล้ว' : 'ปลอดภัย']);
+    S.acctPill.set(['Account', breached ? 'taken' : 'safe']);
     S.acctPill.tone(breached ? 'hot' : 'ok');
 
-    S.setP.set(0, cfg.factors === 'passkey' ? 'idle' : 'ok', cfg.factors === 'passkey' ? 'ไม่ใช้แล้ว' : 'ใช้อยู่');
-    S.setP.set(1, cfg.factors === 'pass' ? 'idle' : 'ok', cfg.factors === 'pass' ? 'ไม่มี' : cfg.factors === 'sms' ? 'เบอร์มือถือ' : cfg.factors === 'totp' ? 'แอป TOTP' : 'อุปกรณ์');
-    S.setP.set(2, cfg.factors === 'passkey' ? 'ok' : 'idle', cfg.factors === 'passkey' ? 'ลายนิ้วมือ' : 'ไม่มี');
+    S.setP.set(0, cfg.factors === 'passkey' ? 'idle' : 'ok', cfg.factors === 'passkey' ? 'not used' : 'in use');
+    S.setP.set(1, cfg.factors === 'pass' ? 'idle' : 'ok', cfg.factors === 'pass' ? 'none' : cfg.factors === 'sms' ? 'phone number' : cfg.factors === 'totp' ? 'TOTP app' : 'device');
+    S.setP.set(2, cfg.factors === 'passkey' ? 'ok' : 'idle', cfg.factors === 'passkey' ? 'fingerprint' : 'none');
 
     S.atkP.set(0, ATTACKS[cfg.attack], 'bad');
-    S.atkP.set(1, cfg.attack === 'stuffing' ? 'มีรหัสผ่านที่ถูกต้องอยู่ในมือแล้ว'
-      : cfg.attack === 'simswap' ? 'รับ SMS ของเหยื่อได้ทุกข้อความ'
-      : 'ส่งรหัสที่เหยื่อกรอกต่อให้เว็บจริงทันที', 'dim');
+    S.atkP.set(1, cfg.attack === 'stuffing' ? 'Already holds a valid password'
+      : cfg.attack === 'simswap' ? 'Receives every SMS sent to the victim'
+      : 'Relays the typed code to the real site', 'dim');
 
     const rows = [
-      ['รหัสที่รั่วมา', cfg.factors !== 'pass'],
+      ['Leaked passwords', cfg.factors !== 'pass'],
       ['SIM swap', cfg.factors === 'totp' || cfg.factors === 'passkey'],
-      ['ฟิชชิ่งสด', cfg.factors === 'passkey']
+      ['Live phishing', cfg.factors === 'passkey']
     ];
-    rows.forEach((r, i) => S.sumP.set(i, (r[1] ? '✓ กันได้   ' : '✗ กันไม่ได้  ') + r[0], r[1] ? 'ok' : 'bad'));
+    rows.forEach((r, i) => S.sumP.set(i, (r[1] ? '✓ stops   ' : '✗ misses  ') + r[0], r[1] ? 'ok' : 'bad'));
     S.sumP.set(3, FACTOR_NAME[cfg.factors], 'dim');
 
     for (let i = 0; i < 4; i++) {
       const r = S.log[i];
-      S.logP.set(i, r ? r.t : (i === 0 ? '— รอการล็อกอิน —' : ''), r ? (r.cls === 'bad' ? 'term-bad' : 'term') : 'term dim');
+      S.logP.set(i, r ? r.t : (i === 0 ? '— waiting for a login —' : ''), r ? (r.cls === 'bad' ? 'term-bad' : 'term') : 'term dim');
     }
   }
 });

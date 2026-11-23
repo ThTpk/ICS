@@ -1,18 +1,18 @@
 /* ============================================================
-   บทที่ 5.2 — การควบคุมสิทธิ์แบบ RBAC
-   ให้สิทธิ์ตรงต่อคน → บทบาท → สิทธิ์สะสม → ตรวจความเป็นเจ้าของ
+   Lesson 3.3 — Authorization with RBAC
+   direct grants -> roles -> privilege creep -> ownership checks
    ============================================================ */
 (function () {
 const USERS = [
-  { id: 'ann', p: [-2.5, 2.5], team: 'ขาย', roles: ['sales'] },
-  { id: 'bob', p: [-1.2, 3.8], team: 'ขาย (ย้ายมาจากบัญชี)', roles: ['sales', 'finance'], old: 'finance' },
-  { id: 'cat', p: [0.05, 5.05], team: 'แอดมิน', roles: ['admin'] }
+  { id: 'ann', p: [-2.5, 2.5], team: 'Sales', roles: ['sales'] },
+  { id: 'bob', p: [-1.2, 3.8], team: 'Sales (moved from Finance)', roles: ['sales', 'finance'], old: 'finance' },
+  { id: 'cat', p: [0.05, 5.05], team: 'Admin', roles: ['admin'] }
 ];
 const POLICY = [1.6, 1.0];
 const RES = [
-  { p: [2.8, -2.8], name: 'ใบแจ้งหนี้', pal: 'blue' },
-  { p: [4.05, -1.55], name: 'รายงานเงินเดือน', pal: 'sand' },
-  { p: [5.3, -0.3], name: 'ตั้งค่าระบบ', pal: 'rose' }
+  { p: [2.8, -2.8], name: 'Invoices', pal: 'blue' },
+  { p: [4.05, -1.55], name: 'Payroll', pal: 'sand' },
+  { p: [5.3, -0.3], name: 'Settings', pal: 'rose' }
 ];
 const ROLE = {
   sales: ['invoice:read', 'invoice:write'],
@@ -21,10 +21,10 @@ const ROLE = {
 };
 const DIRECT = {
   ann: ['invoice:read', 'invoice:write'],
-  bob: ['invoice:read', 'invoice:write', 'payroll:read'],   // ตกค้างจากตอนอยู่ฝ่ายบัญชี
+  bob: ['invoice:read', 'invoice:write', 'payroll:read'],   // left over from the Finance days
   cat: ['invoice:read', 'payroll:read', 'settings:admin']
 };
-/* คำขอที่ไล่เป็นรอบ ครอบคลุมทุกเคสที่บทเรียนอธิบาย: [ผู้ขอ, สิทธิ์, เจ้าของรายการเมื่อเปิดโหมดข้ามเจ้าของ] */
+/* requests cycled in order, covering every case the lesson explains: [who asks, permission, record owner when cross-owner mode is on] */
 const CYCLE = [
   ['ann', 'invoice:read', null],
   ['bob', 'payroll:read', null],
@@ -47,130 +47,130 @@ function permsOf(cfg, u) {
 }
 function decide(cfg, u, req) {
   const P = permsOf(cfg, u);
-  if (!P.includes(req.perm)) return { allow: false, why: 'ไม่มีสิทธิ์ ' + SHORT[req.perm] };
-  if (req.owner && req.owner !== u.id && cfg.ownership) return { allow: false, why: 'ไม่ใช่เจ้าของรายการนี้' };
-  return { allow: true, why: 'มีสิทธิ์ ' + SHORT[req.perm] };
+  if (!P.includes(req.perm)) return { allow: false, why: 'no ' + SHORT[req.perm] + ' permission' };
+  if (req.owner && req.owner !== u.id && cfg.ownership) return { allow: false, why: 'not the owner of this record' };
+  return { allow: true, why: 'has ' + SHORT[req.perm] + ' permission' };
 }
 
 function tableLines(cfg) {
   if (cfg.mode === 'direct') {
     return [
-      ['ให้สิทธิ์ตรงต่อผู้ใช้ทีละคน ไม่มีบทบาท', 'dim'],
+      ['Granted straight to each user, no roles', 'dim'],
       ['ann  → invoice:read, invoice:write', 'mono'],
       ['bob  → invoice:read, invoice:write, payroll:read', 'bad mono'],
       ['cat  → invoice:read, payroll:read, settings:admin', 'mono'],
-      ['เพิ่มคนใหม่ = ไล่ก๊อปทุกบรรทัดด้วยมือ', 'dim']
+      ['A new hire means copying every line by hand', 'dim']
     ];
   }
-  const b = cfg.creep ? 'ขาย + บัญชี' : 'ขาย';
+  const b = cfg.creep ? 'Sales+Finance' : 'Sales';
   return [
-    ['ผู้ใช้   บทบาท           สิทธิ์ที่ได้จากบทบาท', 'dim'],
-    ['ann     ขาย             invoice:read / write', 'mono'],
-    ['bob     ' + (b + '             ').slice(0, 15) + (cfg.creep ? 'invoice r/w + payroll:r' : 'invoice:read / write'), cfg.creep ? 'bad mono' : 'mono'],
-    ['cat     แอดมิน          invoice:r, payroll:r, settings', 'mono'],
-    [cfg.ownership ? 'ทุกคำขอถูกตรวจความเป็นเจ้าของอีกชั้น' : 'ยังไม่ตรวจว่ารายการนั้นเป็นของใคร',
+    ['USER    ROLE            PERMISSIONS GRANTED', 'dim'],
+    ['ann     Sales           invoice:read / write', 'mono'],
+    ['bob     ' + (b + '                ').slice(0, 16) + (cfg.creep ? 'invoice r/w + payroll:r' : 'invoice:read / write'), cfg.creep ? 'bad mono' : 'mono'],
+    ['cat     Admin           inv:r, payroll:r, settings', 'mono'],
+    [cfg.ownership ? 'Every request is checked for ownership' : 'Nothing checks who owns the record',
       cfg.ownership ? 'ok' : 'bad']
   ];
 }
 
 ICS.register({
   id: 'rbac',
-  title: 'การควบคุมสิทธิ์แบบ RBAC',
-  sub: 'รู้ว่าเป็นใครแล้วยังไม่พอ ต้องตอบให้ได้ด้วยว่าคนนั้นทำอะไรกับของชิ้นไหนได้บ้าง',
-  minutes: 12,
-  level: 'ระดับกลาง',
+  title: 'Role-Based Access Control',
+  sub: 'Authentication established who you are. Authorization answers the next question: now that I know who you are, what access do you get, and to which records?',
+  minutes: 13,
+  level: 'Intermediate',
 
   legend: [
-    ['req sq', 'คำขอจากผู้ใช้'],
-    ['res', 'อนุญาต'],
-    ['bad', 'ปฏิเสธ / ใช้สิทธิ์เกิน'],
-    ['hollow', 'ตรวจความเป็นเจ้าของ']
+    ['req sq', 'Request from a user'],
+    ['res', 'Allowed'],
+    ['bad', 'Denied or over-privileged'],
+    ['hollow', 'Ownership check']
   ],
 
   metrics: [
-    { key: 'allow', label: 'อนุญาต' },
-    { key: 'deny', label: 'ปฏิเสธ', tone: c => (c.stats.deny || 0) > 0 ? 'lit' : '' },
-    { key: 'over', label: 'ใช้สิทธิ์เกินหน้าที่', bad: true, tone: c => (c.stats.over || 0) > 0 ? 'warn' : '' },
-    { key: 'idor', label: 'อ่านของคนอื่นได้', bad: true, tone: c => (c.stats.idor || 0) > 0 ? 'warn' : '' },
-    { key: 'np', label: 'สิทธิ์ของ bob', fmt: c => permsOf(c.cfg, USERS[1]).length + ' ข้อ', tone: c => permsOf(c.cfg, USERS[1]).length > 2 ? 'warn' : 'lit' }
+    { key: 'allow', label: 'Allowed' },
+    { key: 'deny', label: 'Denied', tone: c => (c.stats.deny || 0) > 0 ? 'lit' : '' },
+    { key: 'over', label: 'Beyond the job', bad: true, tone: c => (c.stats.over || 0) > 0 ? 'warn' : '' },
+    { key: 'idor', label: 'Read someone else', bad: true, tone: c => (c.stats.idor || 0) > 0 ? 'warn' : '' },
+    { key: 'np', label: 'Permissions bob holds', fmt: c => permsOf(c.cfg, USERS[1]).length + '', tone: c => permsOf(c.cfg, USERS[1]).length > 2 ? 'warn' : 'lit' }
   ],
 
   learn: [
-    ['ให้สิทธิ์ตรงต่อคนไม่สเกลและตรวจสอบยาก', 0],
-    ['บทบาทรวมสิทธิ์ไว้ที่เดียว แก้ที่เดียวมีผลทุกคน', 1],
-    ['ย้ายทีมแล้วไม่ถอนบทบาทเก่า = สิทธิ์สะสม', 2],
-    ['มีสิทธิ์อ่าน ไม่ได้แปลว่าอ่านของทุกคนได้', 4],
-    ['ต้องตรวจความเป็นเจ้าของทุกคำขอ', 5]
+    ['Direct grants do not scale and cannot be audited', 0],
+    ['A role collects permissions in one place', 1],
+    ['Changing team without losing the old role piles them up', 2],
+    ['Read permission does not mean read everyone', 4],
+    ['Check ownership on every single request', 5]
   ],
 
   steps: [
     {
-      tag: 'problem', label: 'ให้ตรงต่อคน', title: 'ให้สิทธิ์ตรงต่อผู้ใช้ทีละคน',
+      tag: 'problem', label: 'Direct grants', title: 'Permissions written straight onto each user',
       body: [
-        'วิธีที่ง่ายที่สุดตอนระบบยังเล็กคือเขียนไว้ว่าใครทำอะไรได้บ้าง พอมีผู้ใช้สิบคนก็ยังไหว พอมีห้าร้อยคนและสิทธิ์สามสิบชนิด ตารางนี้จะกลายเป็นสิ่งที่ไม่มีใครกล้าแตะ',
-        'ดูบรรทัดของ <code>bob</code> เขาเคยอยู่ฝ่ายบัญชีแล้วย้ายมาฝ่ายขาย สิทธิ์ <code>payroll:read</code> ติดมาด้วยและไม่มีใครจำได้ว่าเคยให้ไว้ตอนไหน เขาจึงยังเปิดรายงานเงินเดือนของทั้งบริษัทได้'
+        'The easiest thing to do while a system is small is to write down what each person may do. With ten users it is fine. With five hundred users and thirty kinds of permission the table becomes something nobody dares to touch.',
+        'Look at the row for <code>bob</code>. He used to work in Finance and moved to Sales, and the <code>payroll:read</code> permission came with him. Nobody remembers granting it, and he can still open the payroll report for the whole company.'
       ],
-      note: ['ปัญหาที่แท้จริง', 'ไม่ใช่ว่าวิธีนี้ผิดทางเทคนิค แต่มันตอบคำถามว่า "ใครเข้าถึงเงินเดือนได้บ้าง" ไม่ได้ภายในเวลาอันสั้น และคำถามนี้คือสิ่งที่ผู้ตรวจสอบถามทุกปี'],
-      changed: ['รูปแบบ: ให้สิทธิ์ตรงต่อคน', 'bob: มีสิทธิ์ตกค้าง 1 ข้อ'],
-      cfg: { mode: 'direct', creep: false, ownership: false, cross: false }
+      note: ['The real problem', 'Nothing here is technically wrong. The problem is that it cannot answer "who can reach payroll?" in any reasonable time, and that is the question an auditor asks every year.'],
+      changed: ['Model: direct grants', 'bob: 1 leftover permission'],
+      cfg: { mode: 'direct', creep: true, ownership: false, cross: false }
     },
     {
-      tag: 'technique', label: 'บทบาท', title: 'ยกสิทธิ์ขึ้นไปไว้ที่บทบาท',
+      tag: 'technique', label: 'Roles', title: 'Lift the permissions up into roles',
       body: [
-        'แทนที่จะผูกสิทธิ์กับคน ให้ผูกสิทธิ์กับ <code>บทบาท</code> แล้วค่อยใส่คนเข้าไปในบทบาท ตอนนี้ bob อยู่ในบทบาทฝ่ายขายอย่างเดียว สิทธิ์ตกค้างหายไปเองเพราะมันไม่เคยอยู่กับตัวเขา',
-        'ข้อดีที่ใหญ่ที่สุดคือเวลาต้องแก้ เช่นตัดสินใจว่าฝ่ายขายไม่ควรลบใบแจ้งหนี้ได้อีกต่อไป เราแก้ที่บทบาทเดียวแล้วมีผลกับทุกคนทันที ไม่ต้องไล่แก้ทีละบัญชี'
+        'Instead of tying permissions to people, tie them to a <code>role</code> and then put people into roles. bob is now only in the Sales role, and the leftover permission disappears on its own because it was never attached to him in the first place.',
+        'The real gain shows when something has to change. Decide that Sales should no longer delete invoices and you edit one role, which takes effect for everyone at once, instead of working through accounts one by one.'
       ],
-      note: ['ตั้งชื่อบทบาทตามหน้าที่', 'ชื่อบทบาทควรสะท้อนงานที่ทำ ไม่ใช่สะท้อนระบบที่เข้าถึง บทบาทชื่อ "ฝ่ายขาย" อธิบายตัวเองได้ ส่วนบทบาทชื่อ "db-rw" จะกลายเป็นที่ทิ้งสิทธิ์ในอีกสองปี'],
-      changed: ['รูปแบบ: บทบาท (RBAC)', 'bob: ฝ่ายขายเท่านั้น'],
+      note: ['Name roles after the job', 'A role name should describe the work, not the system it reaches. A role called "Sales" explains itself; a role called "db-rw" becomes a dumping ground for permissions within two years.'],
+      changed: ['Model: roles (RBAC)', 'bob: Sales only'],
       cfg: { mode: 'roles', creep: false, ownership: false, cross: false }
     },
     {
-      tag: 'problem', label: 'สิทธิ์สะสม', title: 'ย้ายทีมแล้วไม่ถอนบทบาทเก่า',
+      tag: 'problem', label: 'Privilege creep', title: 'Changing team without giving up the old role',
       body: [
-        'ในความเป็นจริง ตอน bob ย้ายทีมเขาต้องส่งงานเก่าต่ออีกสองเดือน จึงขอให้คงบทบาทฝ่ายบัญชีไว้ก่อน แล้วสองเดือนนั้นก็ไม่มีใครกลับมาถอน',
-        'เรื่องนี้เกิดซ้ำทุกครั้งที่มีคนย้ายทีม สะสมไปเรื่อยๆ จนพนักงานอายุงานสิบปีกลายเป็นบัญชีที่เข้าถึงได้เกือบทุกอย่างโดยไม่มีใครตั้งใจ เรียกว่า privilege creep'
+        'In reality, when bob changed team he had to finish handing over his old work for two more months, so his Finance role was left in place for the time being. Those two months passed and nobody came back to remove it.',
+        'This happens on every transfer and it accumulates. A ten-year employee ends up with an account that reaches almost everything, which nobody ever decided to allow. The name for it is privilege creep.'
       ],
-      note: ['ทำไมถึงอันตราย', 'ไม่ใช่เพราะกลัวว่า bob จะไม่ดี แต่เพราะถ้าบัญชีของ bob ถูกยึด ผู้โจมตีจะได้สิทธิ์ทั้งหมดที่สะสมไว้ไปด้วย ความเสียหายแปรผันตรงกับสิทธิ์ที่บัญชีนั้นถืออยู่'],
-      changed: ['bob: ยังถือบทบาทฝ่ายบัญชีไว้'],
+      note: ['Why it matters', 'The concern is not that bob would misuse it. It is that if his account is taken over, the attacker inherits everything it has collected. The damage is proportional to what the account holds.'],
+      changed: ['bob: still holds the Finance role'],
       cfg: { mode: 'roles', creep: true, ownership: false, cross: false }
     },
     {
-      tag: 'technique', label: 'ทบทวนสิทธิ์', title: 'ถอนบทบาทเก่าและทบทวนเป็นรอบ',
+      tag: 'technique', label: 'Least privilege', title: 'Remove old roles and review on a schedule',
       body: [
-        'ทางแก้ไม่ใช่เทคโนโลยีใหม่ แต่เป็นกระบวนการ ผูกการถอนบทบาทเข้ากับการย้ายทีมในระบบบุคคล กำหนดวันหมดอายุให้สิทธิ์ที่ให้ชั่วคราว และทบทวนสิทธิ์ทั้งหมดเป็นรอบ',
-        'สิทธิ์ของ bob กลับมาเหลือเท่าที่งานปัจจุบันต้องใช้ หลักการนี้ชื่อว่า least privilege ให้เท่าที่จำเป็น และให้นานเท่าที่จำเป็น'
+        'The fix is not a new technology, it is a process. Tie role removal to the transfer in the HR system, give temporary grants an expiry date, and review every permission on a fixed cycle.',
+        'bob is back to what his current job needs. The principle is called least privilege: grant only what is needed, and only for as long as it is needed.'
       ],
-      note: ['ให้แบบมีวันหมดอายุ', 'สิทธิ์ที่ขอเพิ่มชั่วคราวควรหมดอายุเองโดยอัตโนมัติ เพราะการพึ่งให้คนจำว่าต้องกลับมาถอน เป็นวิธีที่ล้มเหลวเสมอในระยะยาว'],
-      changed: ['ถอนบทบาทฝ่ายบัญชีของ bob'],
+      note: ['Grant with an expiry', 'A permission requested for a short task should expire by itself. Relying on a human to remember to come back and remove it is an approach that fails every time over a long enough period.'],
+      changed: ['Removed bob\'s Finance role'],
       cfg: { mode: 'roles', creep: false, ownership: false, cross: false }
     },
     {
-      tag: 'attack', label: 'IDOR', title: 'มีสิทธิ์อ่าน ไม่ได้แปลว่าอ่านของทุกคนได้',
+      tag: 'attack', label: 'IDOR', title: 'Read permission does not mean read everyone',
       body: [
-        'ann มีสิทธิ์ <code>invoice:read</code> อย่างถูกต้อง แต่ตอนนี้เธอขอเปิด <code>invoice#bob</code> ซึ่งเป็นใบแจ้งหนี้ของลูกค้าของ bob ระบบตรวจแค่ว่า "มีสิทธิ์อ่านใบแจ้งหนี้ไหม" คำตอบคือมี จึงเปิดให้',
-        'ช่องโหว่นี้ชื่อ IDOR ผู้โจมตีแค่เปลี่ยนตัวเลขใน URL จาก 88 เป็น 89 ก็ไล่อ่านเอกสารของคนอื่นได้ทั้งระบบ โดยไม่ต้องเจาะอะไรเลยสักอย่าง'
+        'ann holds <code>invoice:read</code> entirely legitimately. What she is asking for now is <code>invoice#bob</code>, an invoice belonging to one of bob\'s customers. The system checks only "may this person read invoices?", the answer is yes, and it hands the record over.',
+        'This is IDOR, an insecure direct object reference. The attacker changes a number in the URL from 88 to 89 and walks through other people\'s documents, without breaking anything at all.'
       ],
-      note: ['แยกสองคำถามให้ออก', 'การยืนยันตัวตนตอบว่าคุณคือใคร การให้สิทธิ์ตอบว่าคุณทำอะไรได้ แต่ยังเหลือคำถามที่สามที่คนลืมบ่อยที่สุด คือคุณทำกับของ "ชิ้นไหน" ได้'],
-      changed: ['ผู้ใช้เริ่มขอเปิดรายการของคนอื่น'],
+      note: ['Three questions, not two', 'Authentication asks who you are. Authorization asks what you may do. The third question is the one most often forgotten: which record may you do it to?'],
+      changed: ['Users start asking for other people\'s records'],
       cfg: { mode: 'roles', creep: false, ownership: false, cross: true }
     },
     {
-      tag: 'technique', label: 'ตรวจเจ้าของ', title: 'ตรวจความเป็นเจ้าของทุกคำขอ',
+      tag: 'technique', label: 'Ownership', title: 'Check ownership on every request',
       body: [
-        'เพิ่มเงื่อนไขอีกชั้นหลังจากผ่านการตรวจสิทธิ์แล้ว ว่ารายการที่ขอเป็นของผู้ขอหรืออยู่ในขอบเขตที่เขาดูแลหรือไม่ คำขอข้ามเจ้าของถูกปฏิเสธที่ตัวตัดสินใจทันที',
-        'จุดสำคัญคือการตรวจนี้ต้องอยู่ฝั่งเซิร์ฟเวอร์เสมอ การซ่อนปุ่มหรือซ่อนลิงก์บนหน้าเว็บไม่ใช่การควบคุมสิทธิ์ เพราะใครก็ยิงคำขอตรงไปที่ API ได้'
+        'Add one more condition after the permission check has passed: is the requested record owned by the requester, or inside the scope they are responsible for? Cross-owner requests are now refused at the decision point.',
+        'The crucial part is that this check lives on the server, always. Hiding a button or a link in the interface is not access control, because anyone can send the request straight to the API.'
       ],
-      note: ['ตรวจที่เดียว ไม่ใช่ทุกที่', 'ถ้าต้องเขียนเงื่อนไขนี้ซ้ำในทุก endpoint สักวันจะมีคนลืม ให้ย้ายไปไว้ที่ชั้นกลางหรือชั้นเข้าถึงข้อมูล เพื่อให้ปลอดภัยโดยค่าตั้งต้น'],
-      changed: ['เปิดการตรวจความเป็นเจ้าของ'],
+      note: ['Check in one place, not everywhere', 'If this condition has to be written again in every endpoint, one day somebody will forget. Move it into the middleware or the data access layer so the safe behaviour is the default.'],
+      changed: ['Ownership checking enabled'],
       cfg: { mode: 'roles', creep: false, ownership: true, cross: true }
     },
     {
-      tag: 'lab', label: 'ลองเอง', title: 'ลองเอง: ดูสิทธิ์ของ bob ขยับ',
+      tag: 'lab', label: 'Try it', title: 'Try it: watch what bob is allowed to do',
       body: [
-        'เปิดสิทธิ์สะสมพร้อมกับปิดการตรวจเจ้าของ แล้วดูว่าในสิบวินาทีมีคำขอที่ไม่ควรผ่านกี่ครั้ง จากนั้นเปิดการตรวจเจ้าของอย่างเดียวโดยยังปล่อยให้สิทธิ์สะสมอยู่ เพื่อดูว่ามันแก้คนละปัญหากัน',
-        'ปิดท้ายคอร์สด้วยคำถามที่ใช้ได้กับทุกระบบ ใครอ่านข้อมูลนี้ได้บ้าง ใครแก้มันได้บ้าง อะไรทำให้มันหยุดให้บริการได้ และคนที่มีสิทธิ์อยู่ตอนนี้ ยังจำเป็นต้องมีอยู่จริงหรือเปล่า'
+        'Turn privilege creep on with ownership checking off, and count how many requests get through that should not have. Then turn ownership checking on while leaving the creep in place, to see that the two settings solve genuinely different problems.',
+        'Close with the questions that work on any system at all. Who can read this data? Who can change it? What can stop it serving anyone? And does everyone who holds access today still actually need it?'
       ],
-      note: ['ขั้นต่อไปของ RBAC', 'เมื่อเงื่อนไขซับซ้อนขึ้น เช่นต้องดูแผนก เวลา หรือสถานที่ประกอบกัน จะมี ABAC ที่ตัดสินจากคุณสมบัติหลายอย่าง และ ReBAC ที่ตัดสินจากความสัมพันธ์ระหว่างผู้ใช้กับของชิ้นนั้น'],
+      note: ['Where RBAC goes next', 'When the conditions get more complicated, involving department and time and location together, ABAC decides from a set of attributes, and ReBAC decides from the relationship between the user and that particular object.'],
       changed: [],
       cfg: { mode: 'roles', creep: true, ownership: false, cross: true },
       controls: ['mode', 'creep', 'ownership', 'cross']
@@ -179,13 +179,13 @@ ICS.register({
 
   controls: {
     mode: {
-      type: 'seg', label: 'วิธีจัดการสิทธิ์',
-      options: [['direct', 'ให้ตรงต่อคน'], ['roles', 'ใช้บทบาท (RBAC)']],
-      get: c => c.mode, set: (c, v) => { c.mode = v; }
+      type: 'seg', label: 'How permissions are managed',
+      options: [['direct', 'Direct to user'], ['roles', 'Roles (RBAC)']],
+      get: c => c.mode, set: (c, v) => { c.mode = v; }, reset: true
     },
-    creep: { type: 'toggle', label: 'bob ยังถือบทบาทฝ่ายบัญชี', hint: 'จำลองสิทธิ์สะสมจากการย้ายทีม', get: c => c.creep, set: (c, v) => { c.creep = v; } },
-    ownership: { type: 'toggle', label: 'ตรวจความเป็นเจ้าของ', hint: 'กัน IDOR', get: c => c.ownership, set: (c, v) => { c.ownership = v; } },
-    cross: { type: 'toggle', label: 'ผู้ใช้ขอเปิดรายการของคนอื่น', hint: 'เปลี่ยนเลขใน URL', get: c => c.cross, set: (c, v) => { c.cross = v; } }
+    creep: { type: 'toggle', label: 'bob still holds the Finance role', hint: 'privilege creep after a transfer', get: c => c.creep, set: (c, v) => { c.creep = v; } },
+    ownership: { type: 'toggle', label: 'Check ownership', hint: 'stops IDOR', get: c => c.ownership, set: (c, v) => { c.ownership = v; } },
+    cross: { type: 'toggle', label: 'Users ask for other people\'s records', hint: 'changing the number in the URL', get: c => c.cross, set: (c, v) => { c.cross = v; } }
   },
 
   /* ---------------- scene ---------------- */
@@ -230,14 +230,14 @@ ICS.register({
         const b = Ac.box(g, POLICY[0], POLICY[1], { w: 1.45, h: 0.78, pal: 'green' });
         S.own = ctx.el('g', {}, g);
         ctx.glyph.lock(S.own, iso(POLICY[0], POLICY[1], b.box.zt));
-        S.polPill = ctx.pill(L.labels, iso(POLICY[0], POLICY[1] + 1.2, 0)[0], iso(POLICY[0], POLICY[1] + 1.2, 0)[1] + 14, ['ตัวตัดสินสิทธิ์', '']);
+        S.polPill = ctx.pill(L.labels, iso(POLICY[0], POLICY[1] + 1.2, 0)[0], iso(POLICY[0], POLICY[1] + 1.2, 0)[1] + 14, ['Policy engine', '']);
       }
     });
     items.sort((a, b) => a.k - b.k).forEach(it => it.draw());
 
-    S.tableP = ctx.panel(ctx.L.hud, { x: 126, y: 268, w: 348, rows: 5, lh: 15, title: 'ใครได้สิทธิ์อะไรบ้าง' });
-    S.logP = ctx.panel(ctx.L.hud, { x: 486, y: 268, w: 230, rows: 5, lh: 15, title: 'การตัดสินล่าสุด', dark: true });
-    S.reqP = ctx.panel(ctx.L.hud, { x: 126, y: 392, w: 590, rows: 2, title: 'คำขอที่กำลังถูกตัดสิน' });
+    S.tableP = ctx.panel(ctx.L.hud, { x: 126, y: 268, w: 348, rows: 5, lh: 15, title: 'Who gets what' });
+    S.logP = ctx.panel(ctx.L.hud, { x: 486, y: 268, w: 230, rows: 5, lh: 15, title: 'Recent decisions', dark: true });
+    S.reqP = ctx.panel(ctx.L.hud, { x: 126, y: 392, w: 590, rows: 2, title: 'Request being decided' });
   },
 
   tick(ctx, dt) {
@@ -277,8 +277,8 @@ ICS.register({
     if (m.leg === 'res') {
       ctx.bump('allow');
       const top = [P.r[m.ri][0], P.r[m.ri][1] - 26];
-      if (m.idor) { ctx.bump('idor'); ctx.ring(P.r[m.ri]); ctx.float(top, 'ของคนอื่น', 'bad'); }
-      else if (m.over) { ctx.bump('over'); ctx.ring(P.r[m.ri]); ctx.float(top, 'เกินหน้าที่', 'bad'); }
+      if (m.idor) { ctx.bump('idor'); ctx.ring(P.r[m.ri]); ctx.float(top, 'not theirs', 'bad'); }
+      else if (m.over) { ctx.bump('over'); ctx.ring(P.r[m.ri]); ctx.float(top, 'beyond job', 'bad'); }
     }
   },
 
@@ -294,25 +294,25 @@ ICS.register({
     RES.forEach((r, i) => S['rP' + i].set([r.name]));
 
     S.own.setAttribute('opacity', cfg.ownership ? 1 : 0.18);
-    S.polPill.set(['ตัวตัดสินสิทธิ์', cfg.mode === 'direct' ? 'รายชื่อรายคน' : cfg.ownership ? 'บทบาท + เจ้าของ' : 'บทบาทอย่างเดียว']);
+    S.polPill.set(['Policy engine', cfg.mode === 'direct' ? 'per-user list' : cfg.ownership ? 'roles + owner' : 'roles only']);
     S.polPill.tone(cfg.ownership ? 'ok' : cfg.mode === 'direct' ? 'hot' : '');
 
     tableLines(cfg).forEach((l, i) => S.tableP.set(i, l[0], l[1]));
 
     const L = S.last;
     if (!L) {
-      S.reqP.set(0, 'กำลังรอคำขอแรก…', 'dim'); S.reqP.set(1, '', '');
+      S.reqP.set(0, 'Waiting for the first request…', 'dim'); S.reqP.set(1, '', '');
     } else {
-      S.reqP.set(0, L.u + '  ขอ  ' + L.label + (L.owner && L.owner !== L.u ? '   (รายการของ ' + L.owner + ')' : ''),
+      S.reqP.set(0, L.u + '  asks for  ' + L.label + (L.owner && L.owner !== L.u ? '   (record owned by ' + L.owner + ')' : ''),
         L.d.allow ? 'mono' : 'bad mono');
-      S.reqP.set(1, (L.d.allow ? 'อนุญาต · ' : 'ปฏิเสธ · ') + L.d.why +
-        (L.d.allow && L.owner && L.owner !== L.u ? '   ← ไม่ได้ตรวจว่าเป็นของใคร' : ''),
+      S.reqP.set(1, (L.d.allow ? 'allow · ' : 'deny · ') + L.d.why +
+        (L.d.allow && L.owner && L.owner !== L.u ? '   <- ownership never checked' : ''),
         L.d.allow ? (L.owner && L.owner !== L.u ? 'bad' : 'ok') : 'ok');
     }
 
     for (let i = 0; i < 5; i++) {
       const r = S.log[i];
-      S.logP.set(i, r ? r.t : (i === 0 ? '— รอคำขอ —' : ''), r ? (r.cls === 'bad' ? 'term-bad' : 'term') : 'term dim');
+      S.logP.set(i, r ? r.t : (i === 0 ? '— waiting —' : ''), r ? (r.cls === 'bad' ? 'term-bad' : 'term') : 'term dim');
     }
   }
 });
