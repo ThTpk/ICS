@@ -252,47 +252,51 @@ function keyIcon(parent, cx, cy, kind, scale = 1) {
 /* ============================================================
    lesson registry + catalog
    ============================================================ */
+/* โครงคอร์สตาม Course Outline ของรายวิชา 01076042 Information and Computer Security
+   ผศ.ดร. ธนัญชัย ตรีภาค · คณะวิศวกรรมศาสตร์ สจล. */
 const CATALOG = [
-  { num: '01', name: 'พื้นฐานความปลอดภัย', color: '#fcdcbd', ids: ['cia', 'risk'] },
-  { num: '02', name: 'วิทยาการรหัสลับ', color: '#cfe3b2', ids: ['symmetric', 'asymmetric', 'hashing'] },
-  { num: '03', name: 'ความปลอดภัยเครือข่าย', color: '#e7ddf5', ids: ['tls', 'firewall'] },
-  { num: '04', name: 'ความปลอดภัยแอปพลิเคชัน', color: '#d6e5f6', ids: ['sqli', 'xss'] },
-  { num: '05', name: 'การยืนยันตัวตนและสิทธิ์', color: '#f8d5cf', ids: ['mfa', 'rbac'] }
+  { num: '01', name: 'Information Systems',       color: '#fcdcbd', ids: ['infosys'] },
+  { num: '02', name: 'Security Principles',       color: '#cfe3b2', ids: ['cia', 'mfa', 'rbac'] },
+  { num: '03', name: 'Computer Networking',       color: '#d6e5f6', ids: ['netdiagram'] },
+  { num: '04', name: 'Firewall and Policy',       color: '#e7ddf5', ids: ['firewall'] },
+  { num: '05', name: 'Network Security Tools',    color: '#cfe3b2', ids: ['nettools'] },
+  { num: '06', name: 'Incident and Response',     color: '#f8d5cf', ids: ['incident'] },
+  { num: '07', name: 'Web Technology Security',   color: '#d6e5f6', ids: ['sqli', 'xss'] },
+  { num: '08', name: 'Wireless LAN Security',     color: '#fde3a7', ids: ['wireless'] },
+  { num: '09', name: 'IT Risk Management',        color: '#fcdcbd', ids: ['risk'] },
+  { num: '10', name: 'Standards and Procedures',  color: '#e7ddf5', ids: ['iso27001'] },
+  { num: '11', name: 'Law and Compliance',        color: '#f8d5cf', ids: ['law'] },
+  { num: '12', name: 'Business Continuity',       color: '#cfe3b2', ids: ['bcm'] },
+  { num: 'A',  name: 'Appendix: Cryptography',    color: '#ddd3c5', ids: ['symmetric', 'asymmetric', 'hashing', 'tls'] }
 ];
 const SOON = {
-  risk: 'ภัยคุกคาม ช่องโหว่ และความเสี่ยง',
-  firewall: 'Firewall และการกรองทราฟฟิก',
-  xss: 'Cross-site Scripting (XSS)',
-  mfa: 'การยืนยันตัวตนหลายชั้น (MFA)',
-  rbac: 'การควบคุมสิทธิ์แบบ RBAC'
+  netdiagram: 'Network Diagrams and Attacks',
+  nettools: 'Network Security Tools',
+  incident: 'Incident Response',
+  wireless: 'Wireless LAN Security (802.11)',
+  iso27001: 'ISO/IEC 27001 and Procedures',
+  law: 'Computer Law and PDPA',
+  bcm: 'Business Continuity and DR'
 };
 const GLOSSARY = [
-  ['CIA Triad', 'สามเสาหลักของความปลอดภัย: Confidentiality (ความลับ), Integrity (ความถูกต้องครบถ้วน), Availability (ความพร้อมใช้งาน)'],
-  ['Plaintext / Ciphertext', 'ข้อความต้นฉบับที่อ่านได้ กับข้อความหลังเข้ารหัสที่อ่านไม่ได้'],
-  ['Symmetric encryption', 'เข้ารหัสและถอดรหัสด้วยกุญแจเดียวกัน เช่น AES เร็วแต่ต้องแลกกุญแจกันให้ปลอดภัยก่อน'],
-  ['Asymmetric encryption', 'ใช้กุญแจคู่ public/private เช่น RSA, ECC แก้ปัญหาการแลกกุญแจและทำลายเซ็นดิจิทัลได้'],
-  ['Hash function', 'ฟังก์ชันทางเดียวที่ย่อข้อมูลขนาดใดก็ได้ให้เป็นค่าความยาวคงที่ ย้อนกลับไม่ได้ เช่น SHA-256'],
-  ['Salt', 'ค่าสุ่มที่เติมเข้าไปก่อนแฮชรหัสผ่าน ทำให้รหัสเดียวกันได้แฮชต่างกัน และตาราง rainbow table ใช้ไม่ได้'],
-  ['MAC / ลายเซ็นดิจิทัล', 'ค่าตรวจสอบที่แนบมากับข้อมูล ใช้ยืนยันว่าข้อมูลไม่ถูกแก้และมาจากผู้ส่งตัวจริง'],
-  ['MITM (Man-in-the-middle)', 'ผู้โจมตีแทรกตัวอยู่กลางทาง อ่านหรือแก้ข้อมูลที่วิ่งผ่านได้'],
-  ['Certificate / CA', 'ใบรับรองที่ผูก public key กับชื่อโดเมน ลงนามโดย Certificate Authority ที่เบราว์เซอร์เชื่อถือ'],
-  ['TLS', 'โปรโตคอลที่ทำให้ HTTPS ปลอดภัย: ยืนยันตัวตนเซิร์ฟเวอร์ แลกกุญแจ แล้วเข้ารหัสข้อมูลทั้งหมด'],
-  ['SQL Injection', 'ช่องโหว่ที่ input ของผู้ใช้กลายเป็นส่วนของคำสั่ง SQL ทำให้ผู้โจมตีสั่งฐานข้อมูลได้เอง'],
-  ['Prepared statement', 'ส่งโครงคำสั่ง SQL กับค่าพารามิเตอร์แยกกัน ฐานข้อมูลจึงมองค่าเป็นข้อมูลเสมอ ไม่ใช่คำสั่ง'],
-  ['Least privilege', 'ให้สิทธิ์เท่าที่จำเป็นต่อการทำงาน ความเสียหายเมื่อถูกเจาะจะถูกจำกัด'],
-  ['Defense in depth', 'ป้องกันเป็นชั้นๆ หลายชั้น ถ้าชั้นหนึ่งพลาด ชั้นถัดไปยังรับไว้ได้'],
-  ['ทรัพย์สิน / ช่องโหว่ / ภัยคุกคาม', 'สิ่งที่เราปกป้อง / จุดอ่อนในระบบของเราเอง / สิ่งที่อาจใช้จุดอ่อนนั้นทำร้ายเรา'],
-  ['ความเสี่ยง (Risk)', 'โอกาสเกิด × ผลกระทบ ใช้จัดลำดับว่าควรแก้อะไรก่อน และจัดการได้ 4 ทาง: ลด โอน เลี่ยง ยอมรับ'],
-  ['Default deny', 'ตั้งค่าเริ่มต้นของไฟร์วอลล์เป็นปฏิเสธทุกอย่าง แล้วค่อยเขียนกฎอนุญาตเฉพาะที่จำเป็น'],
-  ['Stateful firewall', 'ไฟร์วอลล์ที่จำว่าใครเปิดการเชื่อมต่อไว้ จึงปล่อยคำตอบขากลับผ่านได้โดยไม่ต้องเปิดกฎเพิ่ม'],
-  ['WAF', 'ตัวกรองที่อ่านเนื้อหาระดับแอปพลิเคชัน ใช้เสริมไฟร์วอลล์ซึ่งเห็นแค่ไอพีกับพอร์ต'],
-  ['XSS', 'ข้อมูลของผู้ใช้กลายเป็นสคริปต์ที่รันในเบราว์เซอร์ของเหยื่อ แก้ด้วยการ escape ตามบริบทที่ค่าไปอยู่'],
-  ['HttpOnly / CSP', 'ซ่อนคุกกี้จาก JavaScript / สั่งเบราว์เซอร์ว่าอนุญาตให้รันสคริปต์จากแหล่งใดบ้าง ทั้งคู่เป็นตาข่ายรอง'],
-  ['MFA', 'ยืนยันตัวตนด้วยปัจจัยต่างชนิดกัน: สิ่งที่รู้ (รหัสผ่าน) สิ่งที่มี (อุปกรณ์) สิ่งที่เป็น (ชีวมิติ)'],
-  ['Passkey', 'กุญแจคู่ที่เก็บ private key ไว้ในอุปกรณ์และผูกกับชื่อโดเมน ทำให้หน้าเว็บปลอมใช้ไม่ได้'],
-  ['RBAC', 'ผูกสิทธิ์ไว้กับบทบาทแล้วใส่คนเข้าบทบาท แก้ที่เดียวมีผลกับทุกคนในบทบาทนั้น'],
-  ['Privilege creep', 'สิทธิ์ที่สะสมติดตัวเมื่อคนย้ายทีมแล้วไม่มีใครถอนบทบาทเก่าออก'],
-  ['IDOR', 'มีสิทธิ์อ่านของประเภทนั้นจริง แต่ระบบไม่ตรวจว่ารายการนั้นเป็นของใคร จึงเปลี่ยนเลขใน URL ไปอ่านของคนอื่นได้']
+  ['Information system', 'People, processes and technology working together to collect, process, store and deliver information, so an organisation can decide, coordinate, analyse and control.'],
+  ['Enterprise Architecture', 'A blueprint that aligns business processes, applications, data and technology. TOGAF, Zachman, FEAF and Gartner are the common frameworks.'],
+  ['BDAT layers', 'The four TOGAF architecture layers: Business, Data, Application and Technology. Every layer exists to support the one above it.'],
+  ['Asset inventory', 'The register of everything the organisation owns and runs. Anything missing from it cannot be patched, monitored or defended.'],
+  ['Shadow IT', 'Hardware or software running inside the organisation that the IT team never approved and does not track.'],
+  ['CIA triad', 'Confidentiality, Integrity and Availability. The three properties that together decide whether a system is secure.'],
+  ['AAA', 'Authentication (who are you), Authorization (what may you do) and Accounting (what did you actually do).'],
+  ['PDR', 'Protection, Detection and Response. Assume protection will eventually fail, so you must also detect and respond.'],
+  ['Threat / Vulnerability / Risk', 'What might harm you / the weakness inside your own system / likelihood multiplied by impact.'],
+  ['Default deny', 'Start the firewall by rejecting everything, then write allow rules only for what is genuinely needed.'],
+  ['Stateful firewall', 'A firewall that remembers open connections, so return traffic passes without opening extra holes.'],
+  ['WAF', 'A filter that inspects application-layer content, complementing a firewall that only sees addresses and ports.'],
+  ['SQL Injection', 'User input becomes part of an SQL statement, letting an attacker command the database. Fixed with parameterised queries.'],
+  ['XSS', 'User input becomes script that runs in a victim browser. Fixed by escaping output for the context it lands in.'],
+  ['MFA', 'Proving identity with factors of different kinds: something you know, something you have, something you are.'],
+  ['RBAC', 'Permissions are attached to roles and people are placed into roles, so one change applies to everyone in that role.'],
+  ['Least privilege', 'Grant only the access the job needs, for only as long as it is needed, so a breach stays contained.'],
+  ['Defense in depth', 'Layer the controls, so that when one of them fails the next one still holds.']
 ];
 
 const lessons = {};
@@ -303,7 +307,7 @@ function register(def) { lessons[def.id] = def; if (!order.includes(def.id)) ord
    runtime
    ============================================================ */
 const $ = id => document.getElementById(id);
-const TAGS = { problem: 'ปัญหา', technique: 'วิธีแก้', lab: 'ทดลอง', concept: 'แนวคิด', attack: 'การโจมตี' };
+const TAGS = { problem: 'Problem', technique: 'Fix', lab: 'Lab', concept: 'Concept', attack: 'Attack' };
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let svg, lesson = null, stepIdx = 0, speed = 1;
@@ -571,18 +575,18 @@ function goStep(i, noStore) {
   const n = lesson.steps.length;
   stepIdx = Math.max(0, Math.min(n - 1, i));
   const st = lesson.steps[stepIdx];
-  $('stepNo').textContent = `ขั้นที่ ${stepIdx + 1} จาก ${n}`;
+  $('stepNo').textContent = `Step ${stepIdx + 1} of ${n}`;
   const tag = $('stepTag'); tag.className = 'tag ' + st.tag; tag.textContent = TAGS[st.tag] || st.tag;
   $('stepTitle').textContent = st.title;
   $('stepBody').innerHTML = st.body.map(t => `<p>${t}</p>`).join('') +
     (st.note ? `<div class="note">${NOTE_ICON}<div><b>${st.note[0]}</b>${st.note[1]}</div></div>` : '') +
-    ((st.changed && st.changed.length) ? `<div class="changed"><h3>สิ่งที่เปลี่ยน</h3><ul>${st.changed.map(c => `<li>${c}</li>`).join('')}</ul></div>` : '');
-  svg.setAttribute('aria-label', 'แผนภาพจำลอง: ' + st.title);
+    ((st.changed && st.changed.length) ? `<div class="changed"><h3>What changed</h3><ul>${st.changed.map(c => `<li>${c}</li>`).join('')}</ul></div>` : '');
+  svg.setAttribute('aria-label', 'Simulation: ' + st.title);
   resetSim(false);
   renderControls(st.controls);
   $('prev').disabled = stepIdx === 0;
-  $('nextTxt').textContent = stepIdx === n - 1 ? 'เริ่มบทนี้อีกครั้ง' : 'ถัดไป: ' + lesson.steps[stepIdx + 1].label;
-  $('tlCount').textContent = `ขั้นที่ ${stepIdx + 1} จาก ${n}`;
+  $('nextTxt').textContent = stepIdx === n - 1 ? 'Restart this lesson' : 'Next: ' + lesson.steps[stepIdx + 1].label;
+  $('tlCount').textContent = `Step ${stepIdx + 1} of ${n}`;
   document.querySelectorAll('#tl button').forEach((b, k) => {
     if (k === stepIdx) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
     b.classList.toggle('done', k < stepIdx);
@@ -602,7 +606,7 @@ function buildTimeline() {
   tl.style.gridTemplateColumns = `repeat(${lesson.steps.length},1fr)`;
   lesson.steps.forEach((s, k) => {
     const li = document.createElement('li');
-    li.innerHTML = `<button type="button" aria-label="ขั้นที่ ${k + 1}: ${s.title}"><i>${k + 1}</i>${s.label}</button>`;
+    li.innerHTML = `<button type="button" aria-label="Step ${k + 1}: ${s.title}"><i>${k + 1}</i>${s.label}</button>`;
     li.firstChild.addEventListener('click', () => goStep(k));
     tl.appendChild(li);
   });
@@ -616,13 +620,13 @@ function openLesson(id, stepOverride) {
   svg.setAttribute('viewBox', def.view || '120 70 600 420');
   const mod = CATALOG.find(m => m.ids.includes(id)) || CATALOG[0];
   const pos = mod.ids.indexOf(id) + 1;
-  $('crumb').textContent = `${mod.num}. ${mod.name} / บทที่ ${pos} จาก ${mod.ids.length}`;
+  $('crumb').textContent = `${mod.num}. ${mod.name}  /  Lesson ${pos} of ${mod.ids.length}`;
   $('lessonTitle').textContent = def.title;
   $('lessonSub').textContent = def.sub;
   $('lessonChips').innerHTML = [
-    ['o', `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>${def.minutes} นาที`],
+    ['o', `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>${def.minutes} min`],
     ['g', `<svg viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="10" width="2" height="4"/><rect x="6" y="7" width="2" height="7"/><rect x="10" y="4" width="2" height="10" opacity=".35"/></svg>${def.level}`],
-    ['v', `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h9M5 8h9M5 12h9"/><circle cx="2" cy="4" r=".8" fill="currentColor"/><circle cx="2" cy="8" r=".8" fill="currentColor"/><circle cx="2" cy="12" r=".8" fill="currentColor"/></svg>${def.steps.length} ขั้น`]
+    ['v', `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4h9M5 8h9M5 12h9"/><circle cx="2" cy="4" r=".8" fill="currentColor"/><circle cx="2" cy="8" r=".8" fill="currentColor"/><circle cx="2" cy="12" r=".8" fill="currentColor"/></svg>${def.steps.length} steps`]
   ].map(([c, h]) => `<span class="chip ${c}">${h}</span>`).join('');
   buildTimeline();
   renderLegend();
@@ -668,7 +672,7 @@ function renderTree() {
           b.addEventListener('click', () => openLesson(id));
         } else {
           b.disabled = true;
-          b.innerHTML = `<span>${SOON[id] || id}</span><small>เร็วๆ นี้</small>`;
+          b.innerHTML = `<span>${SOON[id] || id}</span><small>soon</small>`;
         }
         li2.appendChild(b); ul.appendChild(li2);
       });
@@ -676,12 +680,12 @@ function renderTree() {
     }
     tree.appendChild(li);
   });
-  $('sideCount').textContent = `${CATALOG.length} หมวด · ${built}/${total} บท`;
+  $('sideCount').textContent = `${CATALOG.length} modules · ${built}/${total} lessons`;
 }
 
 function renderDoneChip() {
   const n = Object.keys(lessons).filter(id => store('done:' + id) === '1').length;
-  $('doneChip').textContent = `เรียนแล้ว ${n} บท`;
+  $('doneChip').textContent = `${n} lessons done`;
 }
 
 /* ---------- main loop ---------- */
@@ -708,8 +712,8 @@ function frame(now) {
 }
 
 /* ---------- wiring ---------- */
-const PAUSE_SVG = '<svg viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="3" width="2.6" height="10" rx=".6"/><rect x="9.4" y="3" width="2.6" height="10" rx=".6"/></svg>หยุด';
-const PLAY_SVG = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 3v10l8.5-5z"/></svg>เล่น';
+const PAUSE_SVG = '<svg viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="3" width="2.6" height="10" rx=".6"/><rect x="9.4" y="3" width="2.6" height="10" rx=".6"/></svg>Pause';
+const PLAY_SVG = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 3v10l8.5-5z"/></svg>Play';
 
 function start() {
   svg = $('scene');

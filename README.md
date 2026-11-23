@@ -1,81 +1,95 @@
-# Information & Computer Security — คอร์สเรียนแบบ interactive
+# Information and Computer Security — interactive course
 
-เว็บเรียนความปลอดภัยสารสนเทศและคอมพิวเตอร์ ที่อธิบายทุกแนวคิดด้วย **ภาพเคลื่อนไหวแบบ isometric**
-ผู้เรียนเห็นแพ็กเก็ตวิ่งจริง เห็นข้อมูลรั่วจริง และกดปรับค่าเองได้เพื่อดูว่าระบบพังหรือรอดตรงไหน
+An interactive companion to **01076042 Information and Computer Security**
+(ผศ.ดร. ธนัญชัย ตรีภาค · Faculty of Engineering, KMITL).
 
-งานออกแบบ (สี ฟอนต์ เลย์เอาต์ โครงบทเรียน) อ้างอิงจาก `System-Design_LoadBalancing_v2.html`
+Every concept is explained with an animated isometric simulation the learner can drive:
+packets really move, data really leaks, and every control can be switched off to see what it was holding up.
 
-## วิธีเปิด
+Static site — no backend, no build step, no external libraries.
+Visual design follows `System-Design_LoadBalancing_v2.html`.
+
+## Running it
 
 ```bash
 node tools/serve.cjs
 ```
 
-แล้วเปิด `http://localhost:5173` (นี่คือวิธีที่ใช้ทดสอบทั้งหมด)
+Then open `http://localhost:5173`. Opening `index.html` directly also works, since the page uses
+no ES modules and no `fetch`.
 
-เว็บนี้เป็น static ล้วน ไม่มี backend ไม่มี build step และไม่ได้ใช้ ES module หรือ `fetch`
-ดังนั้นดับเบิลคลิก `index.html` เปิดตรงๆ ก็ทำงานได้เช่นกัน
+## Course structure
 
-## บทเรียน 11 บท · 79 ขั้น
+Modules follow the course outline (slides `00 Course Outline`).
 
-| หมวด | บทเรียน | ขั้น | สิ่งที่ได้เห็นเคลื่อนไหว |
+| # | Module | Lessons | Status |
 |---|---|---|---|
-| 01 พื้นฐาน | **CIA Triad** | 8 | ดักฟัง แก้ข้อมูลกลางทาง และยิงถล่มจนล่ม แล้วกู้คืนทีละเสา |
-| 01 พื้นฐาน | **ภัยคุกคาม ช่องโหว่ และความเสี่ยง** | 7 | ปิดช่องโหว่ทีละช่อง แล้วดูจุดในตารางความเสี่ยง 5×5 เลื่อนตาม |
-| 02 วิทยาการรหัสลับ | **การเข้ารหัสแบบสมมาตร** | 8 | Caesar ถูก brute force ต่อหน้า, ECB เผยรูปแบบซ้ำ, Eve คว้ากุญแจไปได้ |
-| 02 วิทยาการรหัสลับ | **กุญแจคู่และลายเซ็นดิจิทัล** | 6 | แจก public key, เซ็น/ตรวจลายเซ็น, MITM สลับกุญแจ, CA จับได้ |
-| 02 วิทยาการรหัสลับ | **แฮชและการเก็บรหัสผ่าน** | 7 | ตารางในฐานข้อมูลเปลี่ยนรูปตามวิธีเก็บ และเครื่องเจาะรหัสไล่แกะทีละบัญชี |
-| 03 เครือข่าย | **TLS: การจับมือของ HTTPS** | 7 | ลำดับข้อความจับมือทีละขั้น และใบรับรองปลอมที่ถูกคลิกข้าม |
-| 03 เครือข่าย | **Firewall และการกรองทราฟฟิก** | 7 | ตารางกฎตัดสินทุกแพ็กเก็ตต่อหน้า พร้อมบันทึกว่าโดนกฎข้อไหน |
-| 04 แอปพลิเคชัน | **SQL Injection** | 8 | คำสั่ง SQL ถูกประกอบขึ้นสดๆ จาก input ที่พิมพ์เอง |
-| 04 แอปพลิเคชัน | **Cross-site Scripting (XSS)** | 7 | คอมเมนต์กลายเป็น HTML แล้วกลายเป็นสคริปต์ที่ส่งคุกกี้เหยื่อออกไป |
-| 05 ตัวตนและสิทธิ์ | **การยืนยันตัวตนหลายชั้น (MFA)** | 7 | ประตูทีละบาน: SMS กันอะไรได้ TOTP เพิ่มอะไร Passkey กันฟิชชิ่งได้อย่างไร |
-| 05 ตัวตนและสิทธิ์ | **การควบคุมสิทธิ์แบบ RBAC** | 7 | สิทธิ์ของ bob พองขึ้นเมื่อย้ายทีม และคำขอข้ามเจ้าของที่ไม่มีใครตรวจ |
+| 01 | Information Systems | Information Systems | ✅ built |
+| 02 | Security Principles | CIA Triad · MFA · RBAC | ⚠ built, Thai text |
+| 03 | Computer Networking | Network Diagrams and Attacks | ⏳ |
+| 04 | Firewall and Policy | Firewall and Traffic Filtering | ⚠ built, Thai text |
+| 05 | Network Security Tools | Network Security Tools | ⏳ |
+| 06 | Incident and Response | Incident Response | ⏳ |
+| 07 | Web Technology Security | SQL Injection · XSS | ⚠ built, Thai text |
+| 08 | Wireless LAN Security | Wireless LAN Security (802.11) | ⏳ |
+| 09 | IT Risk Management | Threat, Vulnerability and Risk | ⚠ built, Thai text |
+| 10 | Standards and Procedures | ISO/IEC 27001 and Procedures | ⏳ |
+| 11 | Law and Compliance | Computer Law and PDPA | ⏳ |
+| 12 | Business Continuity | Business Continuity and DR | ⏳ |
+| A | Appendix: Cryptography | Symmetric · Asymmetric · Hashing · TLS | ⚠ built, Thai text |
 
-แต่ละหมวดเรียงให้ต่อกันเป็นเส้นเดียว เช่น สมมาตรติดปัญหาแลกกุญแจ → กุญแจคู่แก้ให้ → TLS เอาไปประกอบใช้จริง
-และ SQL injection กับ XSS คือปัญหารูปแบบเดียวกัน (ข้อมูลกลายเป็นคำสั่ง) คนละภาษา
+**Lesson 01 — Information Systems** follows the `01 Information Systems` slides: the four TOGAF
+architecture layers (Business, Application, Data, Technology), alignment between them, and why an
+asset missing from the inventory cannot be defended. It answers the topic's guiding question —
+*to look after the registration system, what should the administrator know about it?*
 
-## การใช้งาน
+The cryptography lessons are not a topic in the course outline, so they were moved to an appendix
+rather than deleted. They still support the TLS and web-security material.
 
-- **← →** เปลี่ยนขั้น, **Space** หยุด/เล่น
-- ปุ่ม **เริ่มใหม่** รีเซ็ตการจำลอง, **1× / 2× / 0.5×** ปรับความเร็ว
-- ขั้นสุดท้ายของทุกบทเป็นห้องทดลอง ปรับค่าได้อิสระ
-- ความคืบหน้าถูกจำไว้ใน `localStorage` กลับมาต่อขั้นเดิมได้
-- ปุ่ม **คำศัพท์** บนแถบบนเปิดอภิธานศัพท์ทั้งคอร์ส
+## Using the site
 
-## โครงสร้างโค้ด
+- **← →** change step, **Space** pause/play
+- **Restart** resets the simulation, **1× / 2× / 0.5×** changes speed
+- The last step of each lesson is a lab with free controls
+- Progress is remembered in `localStorage`
+- **Glossary** in the top bar covers the whole course
+
+## Code layout
 
 ```
-index.html              โครงหน้า (แถบบน · สารบัญ · เวที · แผงขั้นตอน)
-assets/css/app.css      design system ทั้งหมด
-assets/js/core.js       เอนจิน: isometric projection, ระบบแพ็กเก็ต, ขั้นตอน, ตัวควบคุม, router
-assets/js/lessons/*.js  หนึ่งไฟล์ต่อหนึ่งบทเรียน
-tools/serve.cjs         static server สำหรับ dev
+index.html              shell: top bar · contents · stage · step panel
+assets/css/app.css      the whole design system
+assets/js/core.js       engine: isometric projection, packets, steps, controls, router
+assets/js/lessons/*.js  one file per lesson
+tools/serve.cjs         static dev server
 ```
 
-ทุกบทเรียนลงทะเบียนตัวเองผ่าน `ICS.register({...})` โดยบอก core ว่า:
+Each lesson registers itself through `ICS.register({...})`, telling the core:
 
-- `steps[]` — เนื้อหาแต่ละขั้น พร้อม `cfg` ที่เป็นสถานะตั้งต้นของการจำลอง
-- `metrics[]` — ตัวเลขบนแถบบนของเวที
-- `controls{}` — ตัวควบคุมในห้องทดลอง (toggle / seg / range / text / buttons)
-- `build(ctx)` วาดฉากครั้งเดียว · `tick(ctx, dt)` เดินการจำลอง · `arrive(ctx, p)` จัดการแพ็กเก็ตที่ถึงปลายทาง · `render(ctx)` อัปเดตสิ่งที่เปลี่ยนทุกเฟรม
+- `steps[]` — the text of each step plus the `cfg` that seeds the simulation
+- `metrics[]` — the readouts above the stage
+- `controls{}` — lab controls (toggle / seg / range / text / buttons)
+- `build(ctx)` draws the scene once · `tick(ctx, dt)` advances it · `arrive(ctx, p)` handles a packet
+  reaching its destination · `render(ctx)` refreshes whatever changed
 
-การเพิ่มบทใหม่คือการเขียนไฟล์เดียวในโฟลเดอร์ `lessons/` แล้วเติม `<script>` ใน `index.html`
-และเติม id ลงใน `CATALOG` ใน `core.js`
+Adding a lesson means writing one file in `lessons/`, adding its `<script>` to `index.html`,
+and putting its id into `CATALOG` in `core.js`.
 
-### เครื่องมือสำหรับเทส
+### Testing hook
 
-`core.js` เปิดช่องให้เดินการจำลองเองโดยไม่พึ่ง `requestAnimationFrame` (ใช้ตอนตรวจตัวเลขหรือตอนที่หน้าต่างถูกซ่อน):
+`core.js` can step the simulation without `requestAnimationFrame`, which is how the lessons are
+checked (and is needed when the window is not painting):
 
 ```js
-ICS.open('cia'); ICS.go(3); ICS.step(32, 300); ICS.state()
+ICS.open('infosys'); ICS.go(3); ICS.step(32, 300); ICS.state()
 ```
 
-## หมายเหตุเรื่องความแม่นยำ
+## A note on the numbers
 
-ตัวเลขในบทแฮชและรหัสลับเป็น **แบบจำลองเพื่อการสอน** ไม่ใช่ผลวัดจริง
-ความเร็วการเดารหัส ขนาด keyspace และเวลาที่ใช้เจาะ ถูกตั้งให้อยู่ในระดับเดียวกับของจริง
-เพื่อให้เห็นความต่างเชิงอันดับ (เช่น bcrypt ช้ากว่า SHA-256 กี่เท่า) ไม่ใช่เพื่อใช้อ้างอิงตัวเลขเป๊ะๆ
+Figures in the cryptography and hashing lessons are **teaching models, not measurements**.
+Guess rates, key-space sizes and crack times are set to the right order of magnitude so the
+comparisons hold (bcrypt versus SHA-256, for example), not so the values can be quoted.
 
-เช่นเดียวกัน ciphertext ในหน้าจอไม่ได้มาจาก AES จริง แต่มาจากฟังก์ชันแฮชเล็กๆ ในไฟล์บทเรียน
-ที่ให้คุณสมบัติที่ต้องใช้สอน (ค่าเดิมให้ผลเดิม, เปลี่ยนนิดเดียวผลเปลี่ยนหมด, IV ทำให้ผลต่าง)
+Ciphertext shown on screen does not come from real AES either. It comes from a small hash in the
+lesson file that has the properties the teaching needs: same input gives the same output, a one
+character change alters everything, and an IV makes repeats differ.
