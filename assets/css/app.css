@@ -283,3 +283,9 @@ kbd{font:inherit;padding:0 4px;border:1px solid var(--line-strong);border-bottom
 .slot-num{font:800 11px var(--font);fill:var(--muted);text-anchor:middle}
 .gap-x{stroke:var(--bad);stroke-width:2.6;stroke-linecap:round}
 @media (prefers-reduced-motion:reduce){.rm-mark,.rm-dot{transition:none}}
+
+/* ---------- firewall sandbox (บท 06) ---------- */
+.host-lbl{font:700 9px var(--font);fill:var(--muted);text-anchor:middle}
+.zone-floor{opacity:.55}
+.pn-line.rulehit{fill:var(--violet-ink);font-weight:800}
+.pn-line.ruledead{fill:var(--muted-2);font-weight:500;text-decoration:line-through}

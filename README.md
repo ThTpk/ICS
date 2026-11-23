@@ -30,7 +30,7 @@ the course slides topic by topic and is the reference this structure is checked 
 | 03 | CIA / AAA / PDR ⭐ | CIA Triad · MFA · RBAC | ⚠ built, Thai text |
 | 04 | Computer Networking | Networking and Network Diagrams | ⏳ |
 | 05 | Network Attack | Network Attacks and Scanning | ⏳ |
-| 06 | Firewall and Policy ⭐ | Firewall and Traffic Filtering | ⚠ built, Thai text |
+| 06 | Firewall and Policy ⭐ | Firewall and Policy | ✅ built |
 | 07 | Security Tools | Monitoring, IDS and IPS | ⏳ |
 | 08 | Incident Response | Incident Response Playbook | ⏳ |
 | 09 | Web Security ⭐ | SQL Injection · XSS | ⚠ built, Thai text |
@@ -54,11 +54,13 @@ and WPA2.
 
 ### Known gaps
 
-- Eleven lessons still carry Thai body text and are converted one at a time.
+- Ten lessons still carry Thai body text and are converted one at a time. Several of them have
+  labels that collide once the simulation has been running a while; those are fixed as each lesson
+  is rewritten, since the text changes anyway.
 - `sqli.js` and `xss.js` should merge into a single **A03 Injection** card, since OWASP Top 10 2021
   folded XSS into Injection, and then grow into the full A01–A10 set.
-- The content reference ranks the highest-value pieces still to build: Firewall Rule Sandbox,
-  BCM Timeline (RPO / RTO / WRT / MTD), and the 5×5 Risk Map with the four response strategies.
+- Next on the content reference list: BCM Timeline (RPO / RTO / WRT / MTD) and the 5×5 Risk Map
+  with the four response strategies.
 
 ## Using the site
 
