@@ -38,7 +38,7 @@ the course slides topic by topic and is the reference this structure is checked 
 | 11 | IT Risk Management ⭐ | Threat, Vulnerability and Risk | ⚠ built, Thai text |
 | 12 | Standards and Frameworks | ISO 27001 and NIST CSF 2.0 | ⏳ |
 | 13 | Law and Compliance | Thai IT Law and PDPA | ⏳ |
-| 14 | Business Continuity ⭐ | Business Continuity and DR | ⏳ |
+| 14 | Business Continuity ⭐ | Business Continuity Management | ✅ built |
 | T | Toolbox: Cryptography | Symmetric · Asymmetric · Hashing · TLS | ⚠ built, Thai text |
 
 ⭐ marks the topics the content reference calls the core of the subject.
@@ -59,8 +59,8 @@ and WPA2.
   is rewritten, since the text changes anyway.
 - `sqli.js` and `xss.js` should merge into a single **A03 Injection** card, since OWASP Top 10 2021
   folded XSS into Injection, and then grow into the full A01–A10 set.
-- Next on the content reference list: BCM Timeline (RPO / RTO / WRT / MTD) and the 5×5 Risk Map
-  with the four response strategies.
+- Next on the content reference list: the 5×5 Risk Map with the four response strategies, then the
+  OWASP Top 10 2021 board that merges the SQL injection and XSS lessons into one A03 card.
 
 ## Using the site
 

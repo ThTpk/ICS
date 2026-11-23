@@ -289,3 +289,7 @@ kbd{font:inherit;padding:0 4px;border:1px solid var(--line-strong);border-bottom
 .zone-floor{opacity:.55}
 .pn-line.rulehit{fill:var(--violet-ink);font-weight:800}
 .pn-line.ruledead{fill:var(--muted-2);font-weight:500;text-decoration:line-through}
+
+/* ---------- BCM timeline (บท 14) ---------- */
+.tl-key{font:800 10px var(--font);fill:var(--muted)}
+.tl-val{font:700 10.5px var(--font);fill:var(--ink-2)}
